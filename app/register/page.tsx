@@ -9,17 +9,28 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
 
   async function onSubmit(formData: FormData) {
-    setLoading(true)
-    setError(null)
+    const { default: NProgress } = await import("nprogress")
+    const { toast } = await import("react-toastify")
+    NProgress.start()
     const payload = {
       name: String(formData.get("name") || ""),
       email: String(formData.get("email") || ""),
       password: String(formData.get("password") || ""),
     }
-    const res = await fetch("/api/auth/register", { method: "POST", body: JSON.stringify(payload) })
-    setLoading(false)
-    if (res.ok) router.push("/")
-    else setError((await res.json().catch(() => ({})))?.error || "Could not create account")
+    try {
+      const res = await fetch("/api/auth/register", { method: "POST", body: JSON.stringify(payload) })
+      if (res.ok) {
+        toast.success("Account created! Redirecting...")
+        router.push("/")
+      } else {
+        const err = await res.json().catch(() => ({}))
+        toast.error(err?.error || "Could not create account")
+      }
+    } catch {
+      toast.error("Network error. Please try again.")
+    } finally {
+      NProgress.done()
+    }
   }
 
   return (

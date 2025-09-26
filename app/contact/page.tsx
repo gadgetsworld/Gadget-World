@@ -7,24 +7,30 @@ export default function ContactPage() {
   const [message, setMessage] = useState<string | null>(null)
 
   async function onSubmit(formData: FormData) {
-    setLoading(true)
-    setMessage(null)
+    const { default: NProgress } = await import("nprogress")
+    const { toast } = await import("react-toastify")
+    NProgress.start()
     const payload = {
       name: String(formData.get("name") || ""),
       email: String(formData.get("email") || ""),
       message: String(formData.get("message") || ""),
     }
-    const res = await fetch("/api/contact", { method: "POST", body: JSON.stringify(payload) })
-    setLoading(false)
-    setMessage(res.ok ? "Thanks! We will get back to you soon." : "Something went wrong. Try again.")
-
-    const waText = `Contact Form
-Name: ${payload.name}
-Email: ${payload.email}
-Message: ${payload.message}`
-    if (typeof window !== "undefined") {
-      const url = "https://wa.me/917018021841?text=" + encodeURIComponent(waText)
-      window.open(url, "_blank", "noopener,noreferrer")
+    try {
+      const res = await fetch("/api/contact", { method: "POST", body: JSON.stringify(payload) })
+      const waText = `Contact Form\nName: ${payload.name}\nEmail: ${payload.email}\nMessage: ${payload.message}`
+      if (typeof window !== "undefined") {
+        const url = "https://wa.me/917018021841?text=" + encodeURIComponent(waText)
+        window.open(url, "_blank", "noopener,noreferrer")
+      }
+      if (res.ok) {
+        toast.success("Thanks! We will get back to you soon.")
+      } else {
+        toast.error("Something went wrong. Try again.")
+      }
+    } catch {
+      toast.error("Network error. Please try again.")
+    } finally {
+      NProgress.done()
     }
   }
 

@@ -1,76 +1,24 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
-
 type DeviceType = "phone" | "laptop" | "tablet"
-type Brand = "Apple" | "Samsung" | "OnePlus" | "Google" | "Xiaomi" | "Realme" | "Oppo" | "Vivo" | "Motorola" | "Asus"
-
 type Variant = string
 
-type Model = {
-  name: string
-  image: string
-  variants: Variant[]
-  basePrices: Record<Variant, number> // INR baseline for each variant
-}
 
-type Catalog = Record<Brand, Model[]>
+import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import { brands } from "@/lib/data"
 
-// Minimal sample catalog; expand as needed
-const CATALOG: Catalog = {
-  Apple: [
-    {
-      name: "iPhone 13",
-      image: "/iphone-13.png",
-      variants: ["4/128GB", "4/256GB"],
-      basePrices: { "4/128GB": 36000, "4/256GB": 39500 },
-    },
-    {
-      name: "iPhone 12",
-      image: "/iphone-12.png",
-      variants: ["4/64GB", "4/128GB"],
-      basePrices: { "4/64GB": 27000, "4/128GB": 30000 },
-    },
-  ],
-  Samsung: [
-    {
-      name: "Galaxy S21",
-      image: "/galaxy-s21.jpg",
-      variants: ["8/128GB", "12/256GB"],
-      basePrices: { "8/128GB": 30000, "12/256GB": 33500 },
-    },
-  ],
-  OnePlus: [
-    {
-      name: "OnePlus 9",
-      image: "/oneplus-9.jpg",
-      variants: ["8/128GB", "12/256GB"],
-      basePrices: { "8/128GB": 23000, "12/256GB": 26000 },
-    },
-  ],
-  Google: [
-    {
-      name: "Pixel 6",
-      image: "/pixel-6.jpg",
-      variants: ["8/128GB"],
-      basePrices: { "8/128GB": 28500 },
-    },
-  ],
-  Xiaomi: [],
-  Realme: [],
-  Oppo: [],
-  Vivo: [],
-  Motorola: [],
-  Asus: [
-    {
-      name: "ROG Phone 2 ZS660KL",
-      image: "/rog-phone-2.jpg",
-      variants: ["8/128GB", "12/512GB"],
-      basePrices: { "8/128GB": 18000, "12/512GB": 23000 },
-    },
-  ],
-}
+const CATALOG = Object.fromEntries(
+  brands.map(b => [
+    b.name,
+    [{
+      name: b.name,
+      image: b.image,
+      variants: ["Standard"],
+      basePrices: { "Standard": 10000 } as Record<string, number>
+    }]
+  ])
+)
 
 type ScreenDetails = {
   touchWorking: "yes" | "no" | ""
@@ -115,7 +63,7 @@ type Evaluation = {
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
-function computeEstimate(brand: Brand | "", model: string, variant: Variant, evaluation: Evaluation) {
+function computeEstimate(brand: string | "", model: string, variant: string, evaluation: Evaluation) {
   // baseline
   let base = 0
   if (brand && model && variant) {
@@ -199,10 +147,10 @@ function computeEstimate(brand: Brand | "", model: string, variant: Variant, eva
 export default function SellPhonePage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
-  const [deviceType, setDeviceType] = useState<DeviceType>("phone")
-  const [brand, setBrand] = useState<Brand | "">("")
-  const [model, setModel] = useState("")
-  const [variant, setVariant] = useState<Variant>("")
+  const [deviceType, setDeviceType] = useState<string>("phone")
+  const [brand, setBrand] = useState<string>("")
+  const [model, setModel] = useState<string>("")
+  const [variant, setVariant] = useState<string>("")
   const [condition, setCondition] = useState("")
   const [issues, setIssues] = useState("")
 
@@ -249,7 +197,12 @@ export default function SellPhonePage() {
   const canContinueFromStep6 = true // accessories/functional issues optional
   const canSubmitFromStep7 = userInfo.name && userInfo.phone
 
+
+
   async function handleSubmit() {
+    const NProgress = (await import("nprogress")).default
+    const { toast } = await import("react-toastify")
+    NProgress.start()
     const payload = {
       deviceType,
       brand,
@@ -264,15 +217,22 @@ export default function SellPhonePage() {
       city: userInfo.city,
       address: userInfo.address,
     }
-    const res = await fetch("/api/sell", { method: "POST", body: JSON.stringify(payload) })
-    if (res.ok) {
-      router.push("/sell-phone/success")
-    } else {
-      alert("Something went wrong. Please try again.")
+    try {
+      const res = await fetch("/api/sell", { method: "POST", body: JSON.stringify(payload) })
+      if (res.ok) {
+        toast.success("Request submitted! You'll be contacted soon.")
+        router.push("/sell-phone/success")
+      } else {
+        toast.error("Something went wrong. Please try again.")
+      }
+    } catch (err) {
+      toast.error("Network error. Please try again.")
+    } finally {
+      NProgress.done()
     }
   }
 
-  const BRANDS: Brand[] = [
+  const BRANDS: string[] = [
     "Apple",
     "Samsung",
     "OnePlus",
@@ -390,8 +350,10 @@ export default function SellPhonePage() {
                 className="mt-4 grid gap-6"
                 onSubmit={async (e) => {
                   e.preventDefault()
+                  const { default: NProgress } = await import("nprogress")
+                  const { toast } = await import("react-toastify")
                   if (!brand || !userInfo.name || !userInfo.phone) {
-                    alert("Please fill required fields.")
+                    toast.error("Please fill required fields.")
                     return
                   }
                   const payload = {
@@ -411,30 +373,27 @@ export default function SellPhonePage() {
                     condition,
                     issues,
                   }
-                  const res = await fetch("/api/sell", { method: "POST", body: JSON.stringify(payload) })
-                  const waText = `Sell Request
-Brand: ${brand}
-Model: ${model || "-"}
-Storage: ${variant || "-"}
-Condition: ${condition || "-"}
-Issues: ${issues || "-"}
-
-Name: ${userInfo.name}
-Phone: ${userInfo.phone}
-Email: ${userInfo.email || "-"}
-City: ${userInfo.city || "-"}
-Address: ${userInfo.address || "-"}`
+                  const waText = `Sell Request\nBrand: ${brand}\nModel: ${model || "-"}\nStorage: ${variant || "-"}\nCondition: ${condition || "-"}\nIssues: ${issues || "-"}\n\nName: ${userInfo.name}\nPhone: ${userInfo.phone}\nEmail: ${userInfo.email || "-"}\nCity: ${userInfo.city || "-"}\nAddress: ${userInfo.address || "-"}`
 
                   // open WhatsApp chat with prefilled text
                   if (typeof window !== "undefined") {
-                    const url = "https://wa.me/917018021841?text=" + encodeURIComponent(waText)
+                    const url = "https://wa.me/919882154418?text=" + encodeURIComponent(waText)
                     window.open(url, "_blank", "noopener,noreferrer")
                   }
 
-                  if (res.ok) {
-                    router.push("/sell-phone/success")
-                  } else {
-                    alert("Something went wrong. Please try again.")
+                  NProgress.start()
+                  try {
+                    const res = await fetch("/api/sell", { method: "POST", body: JSON.stringify(payload) })
+                    if (res.ok) {
+                      toast.success("Request submitted! You'll be contacted soon.")
+                      router.push("/sell-phone/success")
+                    } else {
+                      toast.error("Something went wrong. Please try again.")
+                    }
+                  } catch (err) {
+                    toast.error("Network error. Please try again.")
+                  } finally {
+                    NProgress.done()
                   }
                 }}
               >

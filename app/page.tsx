@@ -2,6 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
+import { brands, testimonials as testimonialsData } from "@/lib/data"
 
 function DotNav({ count, index, setIndex }: { count: number; index: number; setIndex: (i: number) => void }) {
   return (
@@ -168,23 +169,49 @@ function BannerCTA() {
 }
 
 function Testimonials() {
-  const data = [
-    { quote: "Sold my old iPhone and got paid the same day. Super smooth!", name: "Rohit" },
-    { quote: "Repair service was top-notch and transparent.", name: "Sana" },
-    { quote: "Bought a refurbished phone—like new and great value.", name: "Karan" },
-  ]
+  const [index, setIndex] = React.useState(0)
+  React.useEffect(() => {
+    const id = setInterval(() => setIndex((i) => (i + 1) % testimonialsData.length), 3500)
+    return () => clearInterval(id)
+  }, [])
+  const t = testimonialsData[index]
   return (
     <section>
       <div className="mx-auto max-w-6xl px-4 py-12">
         <h2 className="text-2xl font-semibold text-balance">What customers say</h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {data.map((t) => (
-            <div key={t.name} className="rounded-xl border p-5 bg-card animate-in fade-in duration-500">
-              <p className="text-pretty leading-relaxed">“{t.quote}”</p>
-              <div className="mt-3 text-sm text-muted-foreground">— {t.name}</div>
-            </div>
+        <div className="mt-6 flex items-center justify-center">
+          <div className="rounded-xl border p-5 bg-card animate-in fade-in duration-500 max-w-md w-full text-center">
+            <img src={t.image} alt={t.name} className="mx-auto mb-4 h-12 w-12 rounded-full object-cover" />
+            <p className="text-pretty leading-relaxed">“{t.text}”</p>
+            <div className="mt-3 text-sm text-muted-foreground">— {t.name}</div>
+          </div>
+        </div>
+        <div className="mt-4 flex justify-center gap-2">
+          {testimonialsData.map((_, i) => (
+            <button
+              key={i}
+              className={`h-2 w-2 rounded-full ${i === index ? "bg-primary" : "bg-muted"}`}
+              aria-label={`Go to testimonial ${i + 1}`}
+              onClick={() => setIndex(i)}
+            />
           ))}
         </div>
+      </div>
+    </section>
+  )
+}
+function BrandsSection() {
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-12">
+      <h2 className="text-2xl font-semibold text-balance">Brands we work with</h2>
+      <div className="mt-6 grid gap-4 md:grid-cols-5 sm:grid-cols-3 grid-cols-2">
+        {brands.map((b) => (
+          <div key={b.name} className="rounded-xl border bg-card p-4 flex flex-col items-center animate-in fade-in duration-500">
+            <img src={b.image} alt={b.name} className="h-12 w-auto mb-3" />
+            <div className="font-semibold text-center">{b.name}</div>
+            <div className="text-xs text-muted-foreground text-center mt-1">{b.description}</div>
+          </div>
+        ))}
       </div>
     </section>
   )
@@ -196,6 +223,7 @@ export default function HomePage() {
       <Hero />
       <ActionCards />
       <BannerCTA />
+      <BrandsSection />
       <Testimonials />
     </div>
   )

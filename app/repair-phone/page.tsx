@@ -9,8 +9,9 @@ export default function RepairPhonePage() {
   const [message, setMessage] = useState<string | null>(null)
 
   async function onSubmit(formData: FormData) {
-    setLoading(true)
-    setMessage(null)
+    const { default: NProgress } = await import("nprogress")
+    const { toast } = await import("react-toastify")
+    NProgress.start()
     const payload = {
       brand: String(formData.get("brand") || ""),
       model: String(formData.get("model") || ""),
@@ -18,14 +19,25 @@ export default function RepairPhonePage() {
       name: String(formData.get("name") || ""),
       phone: String(formData.get("phone") || ""),
     }
-    const res = await fetch("/api/repair", { method: "POST", body: JSON.stringify(payload) })
-    setLoading(false)
-    if (res.ok) {
-      setMessage("Thanks! Our technician will contact you shortly.")
-      setTimeout(() => router.push("/"), 1500)
-    } else {
-      const err = await res.json().catch(() => ({}))
-      setMessage(err?.error || "Something went wrong. Please try again.")
+    // WhatsApp message logic
+    const waText = `Repair Request\nBrand: ${payload.brand}\nModel: ${payload.model}\nIssue: ${payload.issue}\nName: ${payload.name}\nPhone: ${payload.phone}`
+    if (typeof window !== "undefined") {
+      const url = "https://wa.me/919882154418?text=" + encodeURIComponent(waText)
+      window.open(url, "_blank", "noopener,noreferrer")
+    }
+    try {
+      const res = await fetch("/api/repair", { method: "POST", body: JSON.stringify(payload) })
+      if (res.ok) {
+        toast.success("Thanks! Our technician will contact you shortly.")
+        setTimeout(() => router.push("/"), 1500)
+      } else {
+        const err = await res.json().catch(() => ({}))
+        toast.error(err?.error || "Something went wrong. Please try again.")
+      }
+    } catch {
+      toast.error("Network error. Please try again.")
+    } finally {
+      NProgress.done()
     }
   }
 

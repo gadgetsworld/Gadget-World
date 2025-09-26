@@ -1,33 +1,23 @@
 "use client"
 
-import { useState } from "react"
-
 type Category = "phones" | "buds" | "smartwatch" | "headphones"
-const CATEGORIES: { key: Category; label: string }[] = [
+type Brand = "Apple" | "Samsung" | "OnePlus" | "Google" | "Xiaomi" | "Realme" | "Oppo" | "Vivo" | "Motorola" | "Asus"
+import { useState } from "react"
+import { brands } from "@/lib/data"
+
+const CATEGORIES = [
   { key: "phones", label: "Phones" },
   { key: "buds", label: "Buds" },
   { key: "smartwatch", label: "Smartwatch" },
   { key: "headphones", label: "Headphones" },
 ]
 
-type Brand = "Apple" | "Samsung" | "OnePlus" | "Google" | "Xiaomi" | "Realme" | "Oppo" | "Vivo" | "Motorola" | "Asus"
-const BRANDS: Brand[] = [
-  "Apple",
-  "Samsung",
-  "OnePlus",
-  "Google",
-  "Xiaomi",
-  "Realme",
-  "Oppo",
-  "Vivo",
-  "Motorola",
-  "Asus",
-]
+const BRANDS = brands.map(b => b.name)
 
 export default function BuyFlowPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1)
-  const [category, setCategory] = useState<Category | "">("")
-  const [brand, setBrand] = useState<Brand | "">("")
+  const [category, setCategory] = useState<string>("")
+  const [brand, setBrand] = useState<string>("")
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
@@ -35,30 +25,33 @@ export default function BuyFlowPage() {
   const [notes, setNotes] = useState("")
 
   async function handleSubmit() {
+    const { default: NProgress } = await import("nprogress")
+    const { toast } = await import("react-toastify")
+    NProgress.start()
     if (!category || !brand || !name || !phone) {
-      alert("Please fill required fields.")
+      toast.error("Please fill required fields.")
+      NProgress.done()
       return
     }
     // Send notification via server (email) + open WhatsApp chat
     const payload = { category, brand, name, phone, email, city, notes }
-    await fetch("/api/buy-intent", { method: "POST", body: JSON.stringify(payload) })
-
-    const waText = `Buy Request
-Category: ${category}
-Brand: ${brand}
-
-Name: ${name}
-Phone: ${phone}
-Email: ${email || "-"}
-City: ${city || "-"}
-Notes: ${notes || "-"}`
-
-    if (typeof window !== "undefined") {
-      const url = "https://wa.me/917018021841?text=" + encodeURIComponent(waText)
-      window.open(url, "_blank", "noopener,noreferrer")
+    try {
+      const res = await fetch("/api/buy-intent", { method: "POST", body: JSON.stringify(payload) })
+      const waText = `Buy Request\nCategory: ${category}\nBrand: ${brand}\n\nName: ${name}\nPhone: ${phone}\nEmail: ${email || "-"}\nCity: ${city || "-"}\nNotes: ${notes || "-"}`
+      if (typeof window !== "undefined") {
+        const url = "https://wa.me/917018021841?text=" + encodeURIComponent(waText)
+        window.open(url, "_blank", "noopener,noreferrer")
+      }
+      if (res.ok) {
+        toast.success("Thanks! We'll contact you shortly.")
+      } else {
+        toast.error("Something went wrong. Please try again.")
+      }
+    } catch {
+      toast.error("Network error. Please try again.")
+    } finally {
+      NProgress.done()
     }
-
-    alert("Thanks! We'll contact you shortly.")
   }
 
   return (
