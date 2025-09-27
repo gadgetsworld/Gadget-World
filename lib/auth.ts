@@ -1,7 +1,7 @@
 import { cookies } from "next/headers"
 import { SignJWT, jwtVerify } from "jose"
 import bcrypt from "bcryptjs"
-import { getDb } from "./mongodb"
+// import { getDb } from "./mongodb"
 
 const JWT_SECRET = process.env.JWT_SECRET
 if (!JWT_SECRET) {
@@ -53,6 +53,6 @@ export async function getCurrentUser() {
 }
 
 export async function findUserByEmail(email: string) {
-  const db = await getDb()
-  return db.collection("users").findOne({ email })
+  // const db = await getDb()
+  // return db.collection("users").findOne({ email })
 }

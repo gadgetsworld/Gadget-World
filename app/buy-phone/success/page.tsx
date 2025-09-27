@@ -35,7 +35,7 @@ export default function SellSuccessPage() {
           </h1>
           
           <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base leading-relaxed mb-8">
-            Thank you for choosing Gadgets World. Our team will contact you shortly to schedule a free pickup and verify your device.
+            Thank you for choosing Gadgets World. Our team will contact you shortly to share more details about the device.
           </p>
 
           {/* Progress Indicator */}
@@ -53,7 +53,7 @@ export default function SellSuccessPage() {
               <span className="text-gray-300 dark:text-gray-600">→</span>
               <span className="flex items-center">
                 <span className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full mr-2"></span>
-                Free Pickup
+                Issue resolved
               </span>
             </div>
           </div>
@@ -76,23 +76,23 @@ export default function SellSuccessPage() {
             {/* Secondary Actions */}
             <div className="flex flex-col sm:flex-row gap-3">
               <a
-                href="/repair-phone"
+                href="/sell-phone"
                 className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Repair Your Device
+                Sell Any Device
               </a>
               
               <a 
-                href="/buy-phone" 
+                href="/repair-phone" 
                 className="flex-1 inline-flex items-center justify-center px-6 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-semibold rounded-xl transition-all duration-200"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                Browse Phones
+                Repair Your Device
               </a>
             </div>
           </div>
