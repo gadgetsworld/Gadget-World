@@ -7,30 +7,56 @@ export default function RepairPhonePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [formData, setFormData] = useState({
+    brand: "",
+    model: "",
+    issue: "",
+    name: "",
+    phone: ""
+  })
 
-  async function onSubmit(formData: FormData) {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    
     const { default: NProgress } = await import("nprogress")
     const { toast } = await import("react-toastify")
+    
     NProgress.start()
     setLoading(true)
-    const payload = {
-      brand: String(formData.get("brand") || ""),
-      model: String(formData.get("model") || ""),
-      issue: String(formData.get("issue") || ""),
-      name: String(formData.get("name") || ""),
-      phone: String(formData.get("phone") || ""),
-    }
+    
     // WhatsApp message logic
-    const waText = `Repair Request\nBrand: ${payload.brand}\nModel: ${payload.model}\nIssue: ${payload.issue}\nName: ${payload.name}\nPhone: ${payload.phone}`
+    const waText = `Repair Request\nBrand: ${formData.brand}\nModel: ${formData.model}\nIssue: ${formData.issue}\nName: ${formData.name}\nPhone: ${formData.phone}`
     if (typeof window !== "undefined") {
       const url = "https://wa.me/919882154418?text=" + encodeURIComponent(waText)
       window.open(url, "_blank", "noopener,noreferrer")
     }
+    
     try {
-      const res = await fetch("/api/repair", { method: "POST", body: JSON.stringify(payload) })
+      const res = await fetch("/api/repair", { 
+        method: "POST", 
+        body: JSON.stringify(formData) 
+      })
+      
       if (res.ok) {
         toast.success("Thanks! Our technician will contact you shortly.")
-        setTimeout(() => router.push("/repair-phone/success"), 1500)
+        // Clear form fields
+        setFormData({
+          brand: "",
+          model: "",
+          issue: "",
+          name: "",
+          phone: ""
+        })
+        // Redirect to success page
+        router.push("/repair-phone/success")
       } else {
         const err = await res.json().catch(() => ({}))
         toast.error(err?.error || "Something went wrong. Please try again.")
@@ -96,7 +122,7 @@ export default function RepairPhonePage() {
           <p className="text-gray-600 dark:text-gray-300">Fill in the details below and we'll contact you within 30 minutes</p>
         </div>
 
-        <form className="space-y-6" action={onSubmit}>
+        <form className="space-y-6" onSubmit={onSubmit}>
           {/* Device Information */}
           <div className="grid md:grid-cols-3 gap-6">
             <div>
@@ -105,6 +131,8 @@ export default function RepairPhonePage() {
               </label>
               <input 
                 name="brand" 
+                value={formData.brand}
+                onChange={handleInputChange}
                 required 
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="e.g., Apple, Samsung"
@@ -116,6 +144,8 @@ export default function RepairPhonePage() {
               </label>
               <input 
                 name="model" 
+                value={formData.model}
+                onChange={handleInputChange}
                 required 
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="e.g., iPhone 14, Galaxy S23"
@@ -127,6 +157,8 @@ export default function RepairPhonePage() {
               </label>
               <input
                 name="issue"
+                value={formData.issue}
+                onChange={handleInputChange}
                 required
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="Screen, Battery, Camera..."
@@ -142,6 +174,8 @@ export default function RepairPhonePage() {
               </label>
               <input 
                 name="name" 
+                value={formData.name}
+                onChange={handleInputChange}
                 required 
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="Enter your full name"
@@ -153,6 +187,8 @@ export default function RepairPhonePage() {
               </label>
               <input 
                 name="phone" 
+                value={formData.phone}
+                onChange={handleInputChange}
                 required 
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="Your contact number"
@@ -163,6 +199,7 @@ export default function RepairPhonePage() {
           {/* Submit Button */}
           <div className="flex items-center gap-4 pt-4">
             <button 
+              type="submit"
               disabled={loading} 
               className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-blue-400 disabled:to-blue-500 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 disabled:scale-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg flex items-center gap-2"
             >

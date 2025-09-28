@@ -1,10 +1,9 @@
 "use client"
 
 type Category = "phones" | "buds" | "smartwatch" | "headphones"
-type Brand = "Apple" | "Samsung" | "OnePlus" | "Google" | "Xiaomi" | "Realme" | "Oppo" | "Vivo" | "Motorola" | "Asus"
 import { useState } from "react"
-import { brands } from "@/lib/data"
-import router from "next/router"
+import { headphoneBrands, smartwatchBrands, budsBrands, brands } from "@/lib/data"
+import { useRouter } from "next/navigation"
 
 const CATEGORIES = [
   { key: "phones", label: "Phones", icon: "📱" },
@@ -12,8 +11,6 @@ const CATEGORIES = [
   { key: "smartwatch", label: "Smartwatch", icon: "⌚" },
   { key: "headphones", label: "Headphones", icon: "🔊" },
 ]
-
-const BRANDS = brands.map(b => b.name)
 
 export default function BuyFlowPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -24,40 +21,73 @@ export default function BuyFlowPage() {
   const [email, setEmail] = useState("")
   const [city, setCity] = useState("")
   const [notes, setNotes] = useState("")
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
 
+  // Get brands based on selected category - always returns an array
+  const getBrandsByCategory = () => {
+    switch (category) {
+      case "phones":
+        return brands
+      case "buds":
+        return budsBrands
+      case "smartwatch":
+        return smartwatchBrands
+      case "headphones":
+        return headphoneBrands
+      default:
+        return [] // Return empty array if no category selected
+    }
+  }
+
+  // Function to clear all form fields
+  const clearAllFields = () => {
+    setCategory("")
+    setBrand("")
+    setName("")
+    setPhone("")
+    setEmail("")
+    setCity("")
+    setNotes("")
+    setStep(1)
+  }
+
   async function handleSubmit() {
-  setLoading(true); // Add this line
-  const { default: NProgress } = await import("nprogress")
-  const { toast } = await import("react-toastify")
-  NProgress.start()
-  if (!category || !brand || !name || !phone) {
-    toast.error("Please fill required fields.")
-    NProgress.done()
-    setLoading(false); 
-    return
-  }
-  const payload = { category, brand, name, phone, email, city, notes }
-  try {
-    const res = await fetch("/api/buy-intent", { method: "POST", body: JSON.stringify(payload) })
-    const waText = `Buy Request\nCategory: ${category}\nBrand: ${brand}\n\nName: ${name}\nPhone: ${phone}\nEmail: ${email || "-"}\nCity: ${city || "-"}\nNotes: ${notes || "-"}`
-    if (typeof window !== "undefined") {
-      const url = "https://wa.me/917018021841?text=" + encodeURIComponent(waText)
-      window.open(url, "_blank", "noopener,noreferrer")
+    setLoading(true);
+    const { default: NProgress } = await import("nprogress")
+    const { toast } = await import("react-toastify")
+    NProgress.start()
+    if (!category || !brand || !name || !phone) {
+      toast.error("Please fill required fields.")
+      NProgress.done()
+      setLoading(false); 
+      return
     }
-    if (res.ok) {
-      toast.success("Thanks! We'll contact you shortly.")
-      setTimeout(() => router.push("/repair-phone/success"), 1500)
-    } else {
-      toast.error("Something went wrong. Please try again.")
+    const payload = { category, brand, name, phone, email, city, notes }
+    try {
+      const res = await fetch("/api/buy-intent", { method: "POST", body: JSON.stringify(payload) })
+      const waText = `Buy Request\nCategory: ${category}\nBrand: ${brand}\n\nName: ${name}\nPhone: ${phone}\nEmail: ${email || "-"}\nCity: ${city || "-"}\nNotes: ${notes || "-"}`
+      if (typeof window !== "undefined") {
+        const url = "https://wa.me/917018021841?text=" + encodeURIComponent(waText)
+        window.open(url, "_blank", "noopener,noreferrer")
+      }
+      if (res.ok) {
+        toast.success("Thanks! We'll contact you shortly.")
+        // Clear all form fields before redirecting
+        clearAllFields()
+        router.push("/buy-phone/success")
+      } else {
+        toast.error("Something went wrong. Please try again.")
+      }
+    } catch {
+      toast.error("Network error. Please try again.")
+    } finally {
+      NProgress.done()
+      setLoading(false);
     }
-  } catch {
-    toast.error("Network error. Please try again.")
-  } finally {
-    NProgress.done()
-    setLoading(false); // Add this line
   }
-}
+
+  const currentBrands = getBrandsByCategory()
 
   return (
     <section className="mx-auto max-w-4xl px-4 sm:px-6 py-8 sm:py-16">
@@ -136,32 +166,31 @@ export default function BuyFlowPage() {
           <div>
             <div className="text-center mb-6 sm:mb-8">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Select Your Preferred Brand</h2>
-              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Choose from our trusted brands</p>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
+                {category ? `Choose from our trusted ${category} brands` : "Choose from our trusted brands"}
+              </p>
             </div>
             
-             <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
-              {BRANDS.map((b) => {
-                // Find the brand object from your data file that matches the current brand `b`
-                const brandData = brands.find((brandObject) => brandObject.name === b);
-
-                return (
-                  <button
-                    key={b}
-                    onClick={() => setBrand(b)}
-                    className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 transform hover:scale-105 ${
-                      brand === b 
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg scale-105' 
-                        : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
-                    }`}
-                  >
-                    <div className="h-12 sm:h-16 rounded-lg grid place-items-center mb-2">
-                      {/* Correctly use the image from the found brandData object */}
-                      <img src={brandData?.image || ''} alt={b} className="h-10 sm:h-12 w-auto opacity-80" />
-                    </div>
-                    <div className="font-semibold text-gray-900 dark:text-white text-center text-xs sm:text-sm">{b}</div>
-                  </button>
-                );
-              })}
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
+              {currentBrands.map((brandData) => (
+                <button
+                  key={brandData.name}
+                  onClick={() => setBrand(brandData.name)}
+                  className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 transform hover:scale-105 ${
+                    brand === brandData.name 
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg scale-105' 
+                      : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
+                  }`}
+                >
+                  <div className="h-12 sm:h-16 rounded-lg grid place-items-center mb-2">
+                    <img src={brandData.image || ''} alt={brandData.name} className="h-10 sm:h-12 w-auto opacity-80" />
+                  </div>
+                  <div className="font-semibold text-gray-900 dark:text-white text-center text-xs sm:text-sm">{brandData.name}</div>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 text-center mt-1 hidden sm:block">
+                    {brandData.description}
+                  </p>
+                </button>
+              ))}
             </div>
             
             <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mt-6 sm:mt-8">

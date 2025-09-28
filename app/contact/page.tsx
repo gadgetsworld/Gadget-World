@@ -1,34 +1,57 @@
 "use client"
 
 import { useState } from "react"
-import router from "next/router"
+import { useRouter } from "next/navigation"
 
 export default function ContactPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: ""
+  })
 
-  async function onSubmit(formData: FormData) {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    
     const { default: NProgress } = await import("nprogress")
     const { toast } = await import("react-toastify")
     NProgress.start()
     setLoading(true)
-    
-    const payload = {
-      name: String(formData.get("name") || ""),
-      email: String(formData.get("email") || ""),
-      message: String(formData.get("message") || ""),
-    }
-    
+
     try {
-      const res = await fetch("/api/contact", { method: "POST", body: JSON.stringify(payload) })
-      const waText = `Contact Form\nName: ${payload.name}\nEmail: ${payload.email}\nMessage: ${payload.message}`
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        body: JSON.stringify(formData),
+      })
+
+      const waText = `Contact Form\nName: ${formData.name}\nEmail: ${formData.email}\nMessage: ${formData.message}`
       if (typeof window !== "undefined") {
-        const url = "https://wa.me/917018021841?text=" + encodeURIComponent(waText)
+        const url =
+          "https://wa.me/917018021841?text=" + encodeURIComponent(waText)
         window.open(url, "_blank", "noopener,noreferrer")
       }
+
       if (res.ok) {
         toast.success("Thanks! We will get back to you soon.")
-        setTimeout(() => router.push("/contact/success"), 1500)
+        // Clear all form fields
+        setFormData({
+          name: "",
+          email: "",
+          message: ""
+        })
+        // Redirect to success page
+        router.push("/contact/success")
       } else {
         toast.error("Something went wrong. Try again.")
       }
@@ -39,6 +62,7 @@ export default function ContactPage() {
       setLoading(false)
     }
   }
+
 
   const faqs = [
     {
@@ -119,7 +143,7 @@ export default function ContactPage() {
               Fill out the form below and we'll get back to you within 24 hours.
             </p>
           </div>
-          <form className="space-y-6" action={onSubmit}>
+          <form className="space-y-6" onSubmit={onSubmit}>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
@@ -127,6 +151,8 @@ export default function ContactPage() {
                 </label>
                 <input 
                   name="name" 
+                  value={formData.name}
+                  onChange={handleInputChange}
                   required 
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="Your full name"
@@ -139,6 +165,8 @@ export default function ContactPage() {
                 <input 
                   name="email" 
                   type="email" 
+                  value={formData.email}
+                  onChange={handleInputChange}
                   required 
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="your.email@example.com"
@@ -151,6 +179,8 @@ export default function ContactPage() {
               </label>
               <textarea 
                 name="message" 
+                value={formData.message}
+                onChange={handleInputChange}
                 required 
                 rows={6}
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
@@ -158,6 +188,7 @@ export default function ContactPage() {
               />
             </div>
             <button 
+              type="submit"
               disabled={loading} 
               className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-blue-400 disabled:to-blue-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] disabled:scale-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg"
             >

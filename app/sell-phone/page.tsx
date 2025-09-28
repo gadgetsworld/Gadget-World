@@ -1,90 +1,18 @@
 "use client"
 
-type DeviceType = "phone" | "laptop" | "tablet"
-type Variant = string
-
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { brands } from "@/lib/data"
 
-const CATALOG = Object.fromEntries(
-  brands.map(b => [
-    b.name,
-    [{
-      name: b.name,
-      image: b.image,
-      variants: ["Standard"],
-      basePrices: { "Standard": 10000 } as Record<string, number>
-    }]
-  ])
-)
-
-type ScreenDetails = {
-  touchWorking: "yes" | "no" | ""
-  deadSpots: "none" | "small" | "large" | ""
-  visibleLines: "none" | "some" | "many" | ""
-  physical: "fine" | "cracked" | "shattered" | ""
-}
-
-type BodyCondition = "minor-scratches" | "major-scratches" | "heavy-dents" | "cracked-back" | "bent-panel" | "none"
-
-type FunctionalIssue =
-  | "front-camera"
-  | "back-camera"
-  | "volume-button"
-  | "fingerprint"
-  | "wifi"
-  | "battery"
-  | "speaker"
-  | "power-button"
-  | "charging-port"
-  | "face-sensor"
-  | "silent-button"
-  | "audio-receiver"
-
-type Accessories = {
-  charger: boolean
-  boxSameImei: boolean
-  billSameImei: boolean
-}
-
-type Evaluation = {
-  canCall: "yes" | "no" | ""
-  screenDefect: "yes" | "no" | ""
-  bodyDefect: "yes" | "no" | ""
-  underWarranty: "yes" | "no" | ""
-  gstBillAvailable: "yes" | "no" | ""
-  screenDetails: ScreenDetails
-  bodyCondition: BodyCondition
-  functionalIssues: FunctionalIssue[]
-  accessories: Accessories
-}
-
-type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7
-
-
 export default function SellPhonePage() {
   const router = useRouter()
-  const [step, setStep] = useState<Step>(1)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
   const [deviceType, setDeviceType] = useState<string>("phone")
   const [brand, setBrand] = useState<string>("")
   const [model, setModel] = useState<string>("")
   const [variant, setVariant] = useState<string>("")
   const [condition, setCondition] = useState("")
   const [issues, setIssues] = useState("")
-
-  const [evaluation, setEvaluation] = useState<Evaluation>({
-    canCall: "",
-    screenDefect: "",
-    bodyDefect: "",
-    underWarranty: "",
-    gstBillAvailable: "",
-    screenDetails: { touchWorking: "", deadSpots: "", visibleLines: "", physical: "" },
-    bodyCondition: "none",
-    functionalIssues: [],
-    accessories: { charger: false, boxSameImei: false, billSameImei: false },
-  })
-
   const [userInfo, setUserInfo] = useState({
     name: "",
     phone: "",
@@ -93,47 +21,62 @@ export default function SellPhonePage() {
     address: "",
   })
 
-
-
-  const canContinueFromStep1 = !!brand
-  const canContinueFromStep2 = !!model
-  const canContinueFromStep3 = !!variant
-  const canContinueFromStep4 =
-    evaluation.canCall &&
-    evaluation.screenDefect &&
-    evaluation.bodyDefect &&
-    evaluation.underWarranty &&
-    evaluation.gstBillAvailable
-  const canContinueFromStep5 =
-    evaluation.screenDefect === "no" ||
-    (evaluation.screenDetails.touchWorking &&
-      evaluation.screenDetails.deadSpots &&
-      evaluation.screenDetails.visibleLines &&
-      evaluation.screenDetails.physical)
-  const canContinueFromStep6 = true // accessories/functional issues optional
-  const canSubmitFromStep7 = userInfo.name && userInfo.phone
+  // Function to clear all form fields
+  const clearAllFields = () => {
+    setDeviceType("phone")
+    setBrand("")
+    setModel("")
+    setVariant("")
+    setCondition("")
+    setIssues("")
+    setUserInfo({
+      name: "",
+      phone: "",
+      email: "",
+      city: "",
+      address: "",
+    })
+    setStep(1)
+  }
 
   async function handleSubmit() {
-    const NProgress = (await import("nprogress")).default
+    const { default: NProgress } = await import("nprogress")
     const { toast } = await import("react-toastify")
     NProgress.start()
+    
+    if (!brand || !userInfo.name || !userInfo.phone) {
+      toast.error("Please fill required fields.")
+      NProgress.done()
+      return
+    }
+
     const payload = {
       deviceType,
       brand,
       model,
       storage: variant,
-      evaluation,
-      pickup: { charges: 0, type: "Free Pickup" },
       name: userInfo.name,
       phone: userInfo.phone,
       email: userInfo.email,
       city: userInfo.city,
       address: userInfo.address,
+      condition,
+      issues,
     }
+
+    const waText = `Sell Request\nBrand: ${brand}\nModel: ${model || "-"}\nStorage: ${variant || "-"}\nCondition: ${condition || "-"}\nIssues: ${issues || "-"}\n\nName: ${userInfo.name}\nPhone: ${userInfo.phone}\nEmail: ${userInfo.email || "-"}\nCity: ${userInfo.city || "-"}\nAddress: ${userInfo.address || "-"}`
+
+    if (typeof window !== "undefined") {
+      const url = "https://wa.me/919882154418?text=" + encodeURIComponent(waText)
+      window.open(url, "_blank", "noopener,noreferrer")
+    }
+
     try {
       const res = await fetch("/api/sell", { method: "POST", body: JSON.stringify(payload) })
       if (res.ok) {
         toast.success("Request submitted! You'll be contacted soon.")
+        // Clear all fields before redirecting
+        clearAllFields()
         router.push("/sell-phone/success")
       } else {
         toast.error("Something went wrong. Please try again.")
@@ -198,7 +141,7 @@ export default function SellPhonePage() {
               </div>
               
               <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-3">
-                {(["phone", "laptop", "tablet"] as DeviceType[]).map((t) => (
+                {(["phone", "laptop", "tablet"] as const).map((t) => (
                   <button
                     key={t}
                     onClick={() => setDeviceType(t)}
@@ -246,9 +189,7 @@ export default function SellPhonePage() {
               
               <div className="grid gap-4 sm:gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
                 {BRANDS.map((b) => {
-                  // Find the brand object from your `data.ts` that matches the current brand `b`
                   const brandData = brands.find((brandObject) => brandObject.name === b);
-
                   return (
                     <button
                       key={b}
@@ -264,7 +205,6 @@ export default function SellPhonePage() {
                       }`}
                     >
                       <div className="h-12 sm:h-16 rounded-lg grid place-items-center mb-2 sm:mb-3">
-                        {/* Use the found brandData's image. Added a fallback to prevent errors. */}
                         <img src={brandData?.image || ''} alt={`${b} logo`} className="h-10 sm:h-12 w-auto opacity-80" />
                       </div>
                       <div className="font-semibold text-gray-900 dark:text-white text-center text-sm sm:text-base">{b}</div>
@@ -284,7 +224,7 @@ export default function SellPhonePage() {
                   Back to Device Type
                 </button>
                 <button
-                  disabled={!canContinueFromStep1}
+                  disabled={!brand}
                   className="px-4 py-3 sm:px-8 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform hover:scale-105 text-sm sm:text-base order-1 sm:order-2"
                   onClick={() => setStep(3)}
                 >
@@ -317,49 +257,7 @@ export default function SellPhonePage() {
               <form
                 onSubmit={async (e) => {
                   e.preventDefault()
-                  const { default: NProgress } = await import("nprogress")
-                  const { toast } = await import("react-toastify")
-                  if (!brand || !userInfo.name || !userInfo.phone) {
-                    toast.error("Please fill required fields.")
-                    return
-                  }
-                  const payload = {
-                    deviceType,
-                    brand,
-                    model,
-                    storage: variant,
-                    evaluation: null,
-                    computedPrice: 0,
-                    pickup: { charges: 0, type: "Free Pickup" },
-                    name: userInfo.name,
-                    phone: userInfo.phone,
-                    email: userInfo.email,
-                    city: userInfo.city,
-                    address: userInfo.address,
-                    condition,
-                    issues,
-                  }
-                  const waText = `Sell Request\nBrand: ${brand}\nModel: ${model || "-"}\nStorage: ${variant || "-"}\nCondition: ${condition || "-"}\nIssues: ${issues || "-"}\n\nName: ${userInfo.name}\nPhone: ${userInfo.phone}\nEmail: ${userInfo.email || "-"}\nCity: ${userInfo.city || "-"}\nAddress: ${userInfo.address || "-"}`
-
-                  if (typeof window !== "undefined") {
-                    const url = "https://wa.me/919882154418?text=" + encodeURIComponent(waText)
-                    window.open(url, "_blank", "noopener,noreferrer")
-                  }
-
-                  NProgress.start()
-                  try {
-                    const res = await fetch("/api/sell", { method: "POST", body: JSON.stringify(payload) })
-                    if (res.ok) {
-                      toast.success("Request submitted! You'll be contacted soon.")
-                      router.push("/sell-phone/success")
-                    } else {
-                      toast.error("Something went wrong. Please try again.")
-                    }
-                  } catch (err) {
-                    toast.error("Network error. Please try again.")
-                  } finally {
-                    NProgress.done()
-                  }
+                  await handleSubmit()
                 }}
                 className="space-y-4 sm:space-y-6"
               >
@@ -513,7 +411,7 @@ export default function SellPhonePage() {
           )}
         </div>
 
-        {/* Sidebar - Hidden on small screens, shown on medium and above */}
+        {/* Sidebar */}
         <aside className="hidden lg:block space-y-6">
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-700">
             <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-4">Why Sell With Us?</h3>
@@ -553,7 +451,7 @@ export default function SellPhonePage() {
         </aside>
       </div>
 
-      {/* Mobile Help Section - Shown only on small screens */}
+      {/* Mobile Help Section */}
       <div className="lg:hidden mt-6 space-y-4">
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700">
           <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3">Why Sell With Us?</h3>
