@@ -28,17 +28,9 @@ function Hero() {
       title: "Sell your phone in minutes",
       desc: "Instant quote, free pickup, fast payout. Zero hidden fees.",
       ctaA: { href: "/sell-phone", label: "Get Instant Quote" },
-      ctaB: { href: "/buy-phone", label: "Shop Refurbs" },
+      ctaB: { href: "/repair-phone", label: "Repair Device" },
       img: "/buy-refurbished-phones.jpg",
       gradient: "from-blue-600 to-purple-600",
-    },
-    {
-      title: "Certified refurbished phones",
-      desc: "Quality-checked devices with warranty at great prices.",
-      ctaA: { href: "/buy-phone", label: "Browse Phones" },
-      ctaB: { href: "/repair-phone", label: "Repair Phone" },
-      img: "/refurbished-smartphones-banner.jpg",
-      gradient: "from-green-600 to-blue-600",
     },
     {
       title: "Expert phone repairs",
@@ -127,14 +119,6 @@ function ActionCards() {
       img: "/repair-phone.jpg",
       icon: "🔧",
       gradient: "from-green-500 to-emerald-500",
-    },
-    {
-      title: "Buy Refurbished",
-      desc: "Certified devices with warranty and great prices.",
-      href: "/buy-phone",
-      img: "/buy-refurbished-phone.jpg",
-      icon: "📱",
-      gradient: "from-purple-500 to-pink-500",
     },
   ]
   return (

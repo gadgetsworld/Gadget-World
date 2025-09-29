@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 // import { getDb } from "@/lib/mongodb"
-import { hashPassword, createSession } from "@/lib/auth"
+// import { hashPassword, createSession } from "@/lib/auth"
 
 export async function POST(req: Request) {
   try {
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     // const users = db.collection("users")
     // const exists = await users.findOne({ email })
     // if (exists) return NextResponse.json({ error: "Email already in use" }, { status: 400 })
-    const passwordHash = await hashPassword(password)
+    // const passwordHash = await hashPassword(password)
     // const { insertedId } = await users.insertOne({ name, email, passwordHash, createdAt: new Date() })
     // await createSession({ userId: String(insertedId), email, name })
     return NextResponse.json({ ok: true })

@@ -9,31 +9,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
-  const [user, setUser] = useState<{ name?: string; email?: string } | null>(null)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isSheetOpen, setIsSheetOpen] = useState(false) // Add state for sheet open/close
-
-  useEffect(() => {
-    let active = true
-    async function fetchUser() {
-      try {
-        const res = await fetch("/api/auth/me", { cache: "no-store" })
-        if (!active) return
-        if (res.ok) {
-          const data = await res.json()
-          setUser(data?.user ?? null)
-        } else {
-          setUser(null)
-        }
-      } catch {
-        setUser(null)
-      }
-    }
-    fetchUser()
-    return () => {
-      active = false
-    }
-  }, [pathname])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,11 +20,6 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" })
-    setUser(null)
-    router.push("/")
-  }
 
   // Function to handle navigation and close sheet
   const handleNavigation = () => {
@@ -91,9 +63,6 @@ export function Navbar() {
           </Link>
           <Link href="/repair-phone" className={linkCls("/repair-phone")}>
             Repair Service
-          </Link>
-          <Link href="/buy-phone" className={linkCls("/buy-phone")}>
-            Buy Products
           </Link>
           <Link href="/contact" className={linkCls("/contact")}>
             Contact Us
@@ -188,22 +157,7 @@ export function Navbar() {
                     </svg>
                     Repair Service
                   </Link>
-                  
-                  <Link 
-                    href="/buy-phone" 
-                    onClick={handleNavigation}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold transition-all duration-200 ${
-                      pathname === "/buy-phone" 
-                        ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    }`}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg>
-                    Buy Products
-                  </Link>
-                  
+                                   
                   <Link 
                     href="/contact" 
                     onClick={handleNavigation}

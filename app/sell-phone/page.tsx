@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { brands } from "@/lib/data"
+import { brands, smartwatchBrands, budsBrands, laptopBrands, tabletBrands } from "@/lib/data"
 
 export default function SellPhonePage() {
   const router = useRouter()
@@ -21,6 +21,25 @@ export default function SellPhonePage() {
     address: "",
   })
 
+  const progressBarRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to progress bar when step changes to 2 or 3
+  useEffect(() => {
+    if ((step === 2 || step === 3) && progressBarRef.current) {
+      progressBarRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      })
+    }
+  }, [step])
+
+  // Reset brand and model when device type changes
+  useEffect(() => {
+    setBrand("")
+    setModel("")
+    setVariant("")
+  }, [deviceType])
+
   // Function to clear all form fields
   const clearAllFields = () => {
     setDeviceType("phone")
@@ -37,6 +56,31 @@ export default function SellPhonePage() {
       address: "",
     })
     setStep(1)
+  }
+
+  // Get brands based on device type
+  const getBrandsByDeviceType = () => {
+    switch (deviceType) {
+      case "phone":
+        return brands
+      case "smartwatch":
+        return smartwatchBrands
+      case "airbuds":
+        return budsBrands
+      case "laptop":
+        return laptopBrands
+      case "tablet":
+        return tabletBrands
+      case "macbook":
+        return [] // Empty array for MacBook since we skip brand selection
+      default:
+        return brands
+    }
+  }
+
+  // Check if current device type should skip brand selection
+  const shouldSkipBrandSelection = () => {
+    return ["macbook"].includes(deviceType)
   }
 
   async function handleSubmit() {
@@ -64,7 +108,7 @@ export default function SellPhonePage() {
       issues,
     }
 
-    const waText = `Sell Request\nBrand: ${brand}\nModel: ${model || "-"}\nStorage: ${variant || "-"}\nCondition: ${condition || "-"}\nIssues: ${issues || "-"}\n\nName: ${userInfo.name}\nPhone: ${userInfo.phone}\nEmail: ${userInfo.email || "-"}\nCity: ${userInfo.city || "-"}\nAddress: ${userInfo.address || "-"}`
+    const waText = `Sell Request\nDevice Type: ${deviceType}\nBrand: ${brand}\nModel: ${model || "-"}\nStorage: ${variant || "-"}\nCondition: ${condition || "-"}\nIssues: ${issues || "-"}\n\nName: ${userInfo.name}\nPhone: ${userInfo.phone}\nEmail: ${userInfo.email || "-"}\nCity: ${userInfo.city || "-"}\nAddress: ${userInfo.address || "-"}`
 
     if (typeof window !== "undefined") {
       const url = "https://wa.me/919882154418?text=" + encodeURIComponent(waText)
@@ -88,18 +132,38 @@ export default function SellPhonePage() {
     }
   }
 
-  const BRANDS: string[] = [
-    "Apple",
-    "Samsung",
-    "OnePlus",
-    "Google",
-    "Xiaomi",
-    "Realme",
-    "Oppo",
-    "Vivo",
-    "Motorola",
-    "Asus",
-  ]
+  // Device type options including new categories
+  const DEVICE_TYPES = [
+    { key: "phone", label: "Phone", icon: "📞", description: "Smartphones & Mobile Devices" },
+    { key: "macbook", label: "MacBook", icon: "💻", description: "Apple MacBooks & Laptops" },
+    { key: "laptop", label: "Laptop", icon: "💻", description: "Windows & Other Laptops" },
+    { key: "tablet", label: "Tablet", icon: "📱", description: "Tablets & iPads" },
+    { key: "smartwatch", label: "Smartwatch", icon: "⌚", description: "Smart Watches & Wearables" },
+    { key: "airbuds", label: "Airbuds", icon: "🎧", description: "Wireless Earbuds & Headphones" },
+  ] as const
+
+  // Handle step progression
+  const handleNextStep = () => {
+    if (step === 1 && shouldSkipBrandSelection()) {
+      setStep(3) // Skip brand selection for macbook
+      // Auto-set brand to Apple for MacBook
+      setBrand("Apple")
+    } else {
+      setStep((step + 1) as 1 | 2 | 3)
+    }
+  }
+
+  // Handle back step
+  const handleBackStep = () => {
+    if (step === 3 && shouldSkipBrandSelection()) {
+      setStep(1) // Go back to device type if we skipped brand selection
+      setBrand("") // Clear brand when going back
+    } else {
+      setStep((step - 1) as 1 | 2 | 3)
+    }
+  }
+
+  const currentBrands = getBrandsByDeviceType()
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
@@ -113,19 +177,29 @@ export default function SellPhonePage() {
         </p>
       </div>
 
-      {/* Improved Progress Steps */}
-      <div className="mb-8 sm:mb-12">
+      {/* Improved Progress Steps with ref for scrolling */}
+      <div ref={progressBarRef} className="mb-8 sm:mb-12">
         {/* Progress Bar */}
         <div className="mt-6 sm:mt-8 max-w-md mx-auto px-4">
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div 
               className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${((step - 1) / 2) * 100}%` }}
+              style={{ 
+                width: shouldSkipBrandSelection() && step === 3 
+                  ? '100%' 
+                  : `${((step - 1) / 2) * 100}%` 
+              }}
             />
           </div>
           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-            <span>Step {step} of 3</span>
-            <span>{Math.round(((step - 1) / 2) * 100)}% Complete</span>
+            <span>
+              Step {shouldSkipBrandSelection() && step === 3 ? '2' : step} of {shouldSkipBrandSelection() ? '2' : '3'}
+            </span>
+            <span>
+              {shouldSkipBrandSelection() && step === 3 
+                ? '100%' 
+                : `${Math.round(((step - 1) / 2) * 100)}%`} Complete
+            </span>
           </div>
         </div>
       </div>
@@ -140,28 +214,24 @@ export default function SellPhonePage() {
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">What type of device do you want to sell?</p>
               </div>
               
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-3">
-                {(["phone", "laptop", "tablet"] as const).map((t) => (
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {DEVICE_TYPES.map((device) => (
                   <button
-                    key={t}
-                    onClick={() => setDeviceType(t)}
+                    key={device.key}
+                    onClick={() => setDeviceType(device.key)}
                     className={`p-4 sm:p-6 md:p-8 rounded-lg sm:rounded-xl border-2 transition-all duration-200 transform hover:scale-105 min-h-[120px] sm:min-h-[140px] ${
-                      deviceType === t 
+                      deviceType === device.key 
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg' 
                         : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
                     }`}
                   >
                     <div className="text-3xl sm:text-4xl mb-2 sm:mb-4">
-                      {t === 'phone' ? '📱' : t === 'laptop' ? '💻' : '📊'}
+                      {device.icon}
                     </div>
-                    <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white capitalize">
-                      {t}
+                    <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white">
+                      {device.label}
                     </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1 sm:mt-2">
-                      {t === 'phone' ? 'Smartphones & Mobile Devices' : 
-                       t === 'laptop' ? 'Laptops & Computers' : 
-                       'Tablets & iPads'}
-                    </p>
+                    
                   </button>
                 ))}
               </div>
@@ -169,9 +239,9 @@ export default function SellPhonePage() {
               <div className="flex justify-end mt-6 sm:mt-8">
                 <button
                   className="px-6 py-3 sm:px-8 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2 text-sm sm:text-base"
-                  onClick={() => setStep(2)}
+                  onClick={handleNextStep}
                 >
-                  Continue to Brand Selection
+                  {shouldSkipBrandSelection() ? 'Continue to Details' : 'Continue to Brand Selection'}
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -188,34 +258,45 @@ export default function SellPhonePage() {
               </div>
               
               <div className="grid gap-4 sm:gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
-                {BRANDS.map((b) => {
-                  const brandData = brands.find((brandObject) => brandObject.name === b);
-                  return (
-                    <button
-                      key={b}
-                      onClick={() => {
-                        setBrand(b);
-                        setModel("");
-                        setVariant("");
-                      }}
-                      className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 transform hover:scale-105 min-h-[100px] sm:min-h-[120px] ${
-                        brand === b 
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg' 
-                          : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
-                      }`}
-                    >
-                      <div className="h-12 sm:h-16 rounded-lg grid place-items-center mb-2 sm:mb-3">
-                        <img src={brandData?.image || ''} alt={`${b} logo`} className="h-10 sm:h-12 w-auto opacity-80" />
-                      </div>
-                      <div className="font-semibold text-gray-900 dark:text-white text-center text-sm sm:text-base">{b}</div>
-                    </button>
-                  );
-                })}
+                {currentBrands.map((brandData) => (
+                  <button
+                    key={brandData.name}
+                    onClick={() => {
+                      setBrand(brandData.name);
+                      setModel("");
+                      setVariant("");
+                    }}
+                    className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 transform hover:scale-105 min-h-[100px] sm:min-h-[120px] ${
+                      brand === brandData.name 
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg' 
+                        : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
+                    }`}
+                  >
+                    <div className="h-12 sm:h-16 rounded-lg grid place-items-center mb-2 sm:mb-3">
+                      {brandData.image ? (
+                        <img 
+                          src={brandData.image} 
+                          alt={`${brandData.name} logo`} 
+                          className="h-10 sm:h-12 w-auto opacity-80 object-contain" 
+                        />
+                      ) : (
+                        <div className="text-2xl sm:text-3xl opacity-70">
+                          {deviceType === 'smartwatch' ? '⌚' : 
+                           deviceType === 'airbuds' ? '🎧' : '📱'}
+                        </div>
+                      )}
+                    </div>
+                    <div className="font-semibold text-gray-900 dark:text-white text-center text-sm sm:text-base">
+                      {brandData.name}
+                    </div>
+                    
+                  </button>
+                ))}
               </div>
               
               <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 sm:mt-8">
                 <button 
-                  onClick={() => setStep(1)}
+                  onClick={handleBackStep}
                   className="px-4 py-3 sm:px-6 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg sm:rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base order-2 sm:order-1"
                 >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,12 +325,13 @@ export default function SellPhonePage() {
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
                   Provide details about your device and how we can contact you
                 </p>
-                {brand && (
+                {deviceType && (
                   <div className="mt-3 sm:mt-4 inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg text-xs sm:text-sm">
                     <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Selected: <span className="font-semibold capitalize">{deviceType}</span> • <span className="font-semibold">{brand}</span>
+                    Selected: <span className="font-semibold capitalize">{deviceType}</span>
+                    {brand && !shouldSkipBrandSelection() && <span> • <span className="font-semibold">{brand}</span></span>}
                   </div>
                 )}
               </div>
@@ -265,13 +347,38 @@ export default function SellPhonePage() {
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg sm:rounded-xl p-4 sm:p-6">
                   <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3 sm:mb-4">Device Information</h3>
                   <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+                    {/* Show brand input for device types that skipped brand selection */}
+                    {shouldSkipBrandSelection() && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                          Brand *
+                        </label>
+                        <input
+                          className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                          placeholder="Apple"
+                          value="Apple"
+                          readOnly
+                          required
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          MacBook devices are exclusively from Apple
+                        </p>
+                      </div>
+                    )}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Model *
                       </label>
                       <input
                         className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-                        placeholder="e.g. iPhone 13, Galaxy S23"
+                        placeholder={
+                          deviceType === 'macbook' ? 'e.g. MacBook Air M1, MacBook Pro 14"' :
+                          deviceType === 'laptop' ? 'e.g. XPS 13, ThinkPad X1' :
+                          deviceType === 'smartwatch' ? 'e.g. Apple Watch Series 9, Galaxy Watch 6' :
+                          deviceType === 'airbuds' ? 'e.g. AirPods Pro, Galaxy Buds 2' :
+                          deviceType === 'tablet' ? 'e.g. iPad Pro, Galaxy Tab S9' :
+                          'e.g. iPhone 13, Galaxy S23'
+                        }
                         value={model}
                         onChange={(e) => setModel(e.target.value)}
                         required
@@ -279,11 +386,20 @@ export default function SellPhonePage() {
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                        Storage/Variant *
+                        {deviceType === 'macbook' || deviceType === 'laptop' ? 'Storage/RAM *' : 
+                         deviceType === 'smartwatch' ? 'Size/Version *' :
+                         deviceType === 'airbuds' ? 'Version *' : 
+                         deviceType === 'tablet' ? 'Storage/Size *' : 'Storage/Variant *'}
                       </label>
                       <input
                         className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-                        placeholder="e.g. 128GB, 256GB"
+                        placeholder={
+                          deviceType === 'macbook' || deviceType === 'laptop' ? 'e.g. 256GB SSD, 8GB RAM' :
+                          deviceType === 'smartwatch' ? 'e.g. 44mm, GPS + Cellular' :
+                          deviceType === 'airbuds' ? 'e.g. 2nd Generation, with Case' :
+                          deviceType === 'tablet' ? 'e.g. 128GB, 11 inch' :
+                          'e.g. 128GB, 256GB'
+                        }
                         value={variant}
                         onChange={(e) => setVariant(e.target.value)}
                         required
@@ -332,6 +448,7 @@ export default function SellPhonePage() {
                       <input
                         className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                         value={userInfo.name}
+                        placeholder="Your full name"
                         onChange={(e) => setUserInfo((s) => ({ ...s, name: e.target.value }))}
                         required
                       />
@@ -343,6 +460,7 @@ export default function SellPhonePage() {
                       <input
                         className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                         value={userInfo.phone}
+                        placeholder="Your phone number"
                         onChange={(e) => setUserInfo((s) => ({ ...s, phone: e.target.value }))}
                         required
                       />
@@ -388,13 +506,13 @@ export default function SellPhonePage() {
                 <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4">
                   <button 
                     type="button"
-                    onClick={() => setStep(2)}
+                    onClick={handleBackStep}
                     className="px-4 py-3 sm:px-6 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg sm:rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base order-2 sm:order-1"
                   >
                     <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
-                    Back to Brand Selection
+                    {shouldSkipBrandSelection() ? 'Back to Device Type' : 'Back to Brand Selection'}
                   </button>
                   <button 
                     type="submit"

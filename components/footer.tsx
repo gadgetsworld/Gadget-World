@@ -42,17 +42,14 @@ export function Footer() {
           <div>
             <p className="font-semibold text-gray-800 dark:text-white text-lg mb-6">Services</p>
             <div className="flex flex-col items-start space-y-1">
-              <a href="/sell-phone" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 text-base font-medium">
-                Sell Phone/Laptop/Tablet
+              <a href="/" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 text-base font-medium">
+                Home
               </a>
-              <a href="/buy-phone" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 text-base font-medium">
-                Buy Refurbished Phones
+              <a href="/sell-phone" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 text-base font-medium">
+                Sell Your Device
               </a>
               <a href="/repair-phone" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 text-base font-medium">
-                Repair Phone
-              </a>
-              <a href="/sell-automobile" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 text-base font-medium">
-                Sell Automobile
+                Repair Your Device
               </a>
             </div>
           </div>

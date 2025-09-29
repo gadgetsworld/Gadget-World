@@ -1,39 +1,114 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { repairBrands, repairSmartwatchBrands, repairBudsBrands, repairLaptopBrands, repairTabletBrands } from "@/lib/data"
 
 export default function RepairPhonePage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
-  const [formData, setFormData] = useState({
-    brand: "",
-    model: "",
-    issue: "",
+  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [deviceType, setDeviceType] = useState<string>("phone")
+  const [brand, setBrand] = useState<string>("")
+  const [model, setModel] = useState<string>("")
+  const [issue, setIssue] = useState("")
+  const [userInfo, setUserInfo] = useState({
     name: "",
-    phone: ""
+    phone: "",
+    email: "",
+    city: "",
+    address: "",
   })
+  const [loading, setLoading] = useState(false)
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+  const progressBarRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to progress bar when step changes to 2 or 3
+  useEffect(() => {
+    if ((step === 2 || step === 3) && progressBarRef.current) {
+      progressBarRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      })
+    }
+  }, [step])
+
+  // Reset brand and model when device type changes
+  useEffect(() => {
+    setBrand("")
+    setModel("")
+    setIssue("")
+  }, [deviceType])
+
+  // Function to clear all form fields
+  const clearAllFields = () => {
+    setDeviceType("phone")
+    setBrand("")
+    setModel("")
+    setIssue("")
+    setUserInfo({
+      name: "",
+      phone: "",
+      email: "",
+      city: "",
+      address: "",
+    })
+    setStep(1)
   }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    
+  // Get brands based on device type
+  const getBrandsByDeviceType = () => {
+    switch (deviceType) {
+      case "phone":
+        return repairBrands
+      case "smartwatch":
+        return repairSmartwatchBrands
+      case "airbuds":
+        return repairBudsBrands
+      case "laptop":
+        return repairLaptopBrands
+      case "tablet":
+        return repairTabletBrands
+      case "macbook":
+        return [] // Empty array for MacBook since we skip brand selection
+      default:
+        return repairBrands
+    }
+  }
+
+  // Check if current device type should skip brand selection
+  const shouldSkipBrandSelection = () => {
+    return ["macbook"].includes(deviceType)
+  }
+
+  async function handleSubmit() {
     const { default: NProgress } = await import("nprogress")
     const { toast } = await import("react-toastify")
     
     NProgress.start()
     setLoading(true)
     
+    if (!brand || !userInfo.name || !userInfo.phone) {
+      toast.error("Please fill required fields.")
+      NProgress.done()
+      setLoading(false)
+      return
+    }
+
+    const payload = {
+      deviceType,
+      brand,
+      model,
+      issue,
+      name: userInfo.name,
+      phone: userInfo.phone,
+      email: userInfo.email,
+      city: userInfo.city,
+      address: userInfo.address,
+    }
+
     // WhatsApp message logic
-    const waText = `Repair Request\nBrand: ${formData.brand}\nModel: ${formData.model}\nIssue: ${formData.issue}\nName: ${formData.name}\nPhone: ${formData.phone}`
+    const waText = `Repair Request\nDevice Type: ${deviceType}\nBrand: ${brand}\nModel: ${model || "-"}\nIssue: ${issue || "-"}\n\nName: ${userInfo.name}\nPhone: ${userInfo.phone}\nEmail: ${userInfo.email || "-"}\nCity: ${userInfo.city || "-"}\nAddress: ${userInfo.address || "-"}`
+    
     if (typeof window !== "undefined") {
       const url = "https://wa.me/919882154418?text=" + encodeURIComponent(waText)
       window.open(url, "_blank", "noopener,noreferrer")
@@ -42,20 +117,13 @@ export default function RepairPhonePage() {
     try {
       const res = await fetch("/api/repair", { 
         method: "POST", 
-        body: JSON.stringify(formData) 
+        body: JSON.stringify(payload) 
       })
       
       if (res.ok) {
         toast.success("Thanks! Our technician will contact you shortly.")
-        // Clear form fields
-        setFormData({
-          brand: "",
-          model: "",
-          issue: "",
-          name: "",
-          phone: ""
-        })
-        // Redirect to success page
+        // Clear all fields before redirecting
+        clearAllFields()
         router.push("/repair-phone/success")
       } else {
         const err = await res.json().catch(() => ({}))
@@ -69,183 +137,480 @@ export default function RepairPhonePage() {
     }
   }
 
+  // Device type options including new categories
+  const DEVICE_TYPES = [
+    { key: "phone", label: "Phone", icon: "📞", description: "Smartphones & Mobile Devices" },
+    { key: "macbook", label: "MacBook", icon: "💻", description: "Apple MacBooks & Laptops" },
+    { key: "laptop", label: "Laptop", icon: "💻", description: "Windows & Other Laptops" },
+    { key: "tablet", label: "Tablet", icon: "📱", description: "Tablets & iPads" },
+    { key: "smartwatch", label: "Smartwatch", icon: "⌚", description: "Smart Watches & Wearables" },
+    { key: "airbuds", label: "Airbuds", icon: "🎧", description: "Wireless Earbuds & Headphones" },
+  ] as const
+
+  // Common repair issues
+  const COMMON_ISSUES = [
+    "Screen Damage",
+    "Battery Replacement",
+    "Camera Issues",
+    "Charging Port",
+    "Water Damage",
+    "Software Issues",
+    "Speaker/Microphone",
+    "Button Not Working",
+    "Other Issues"
+  ]
+
+  // Handle step progression
+  const handleNextStep = () => {
+    if (step === 1 && shouldSkipBrandSelection()) {
+      setStep(3) // Skip brand selection for macbook
+      // Auto-set brand to Apple for MacBook
+      setBrand("Apple")
+    } else {
+      setStep((step + 1) as 1 | 2 | 3)
+    }
+  }
+
+  // Handle back step
+  const handleBackStep = () => {
+    if (step === 3 && shouldSkipBrandSelection()) {
+      setStep(1) // Go back to device type if we skipped brand selection
+      setBrand("") // Clear brand when going back
+    } else {
+      setStep((step - 1) as 1 | 2 | 3)
+    }
+  }
+
+  const currentBrands = getBrandsByDeviceType()
+
   return (
-    <section className="mx-auto max-w-4xl px-6 py-16">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
       {/* Header Section */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          Professional Phone Repair Service
+      <div className="text-center mb-8 sm:mb-12">
+        <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">
+          Professional Repair Service
         </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+        <p className="text-sm sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto px-2">
           Get your device fixed with genuine parts, expert technicians, and quick turnaround time. 
           We offer doorstep service and warranty on all repairs.
         </p>
       </div>
 
-      {/* Features Grid */}
-      <div className="grid md:grid-cols-3 gap-6 mb-12">
-        <div className="text-center p-6 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
-          <div className="w-12 h-12 bg-blue-100 dark:bg-blue-800 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+      {/* Improved Progress Steps with ref for scrolling */}
+      <div ref={progressBarRef} className="mb-8 sm:mb-12">
+        {/* Progress Bar */}
+        <div className="mt-6 sm:mt-8 max-w-md mx-auto px-4">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500 ease-out"
+              style={{ 
+                width: shouldSkipBrandSelection() && step === 3 
+                  ? '100%' 
+                  : `${((step - 1) / 2) * 100}%` 
+              }}
+            />
           </div>
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Quick Service</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">Same-day repair available for most devices</p>
-        </div>
-
-        <div className="text-center p-6 rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800">
-          <div className="w-12 h-12 bg-green-100 dark:bg-green-800 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <span>
+              Step {shouldSkipBrandSelection() && step === 3 ? '2' : step} of {shouldSkipBrandSelection() ? '2' : '3'}
+            </span>
+            <span>
+              {shouldSkipBrandSelection() && step === 3 
+                ? '100%' 
+                : `${Math.round(((step - 1) / 2) * 100)}%`} Complete
+            </span>
           </div>
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Genuine Parts</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">High-quality original components used</p>
-        </div>
-
-        <div className="text-center p-6 rounded-2xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800">
-          <div className="w-12 h-12 bg-purple-100 dark:bg-purple-800 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Doorstep Service</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">Free pickup and delivery available</p>
         </div>
       </div>
 
-      {/* Repair Form */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-8">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Book Your Repair</h2>
-          <p className="text-gray-600 dark:text-gray-300">Fill in the details below and we'll contact you within 30 minutes</p>
+      <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+        {/* Main Content */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 sm:p-6 lg:p-8">
+          {step === 1 && (
+            <div>
+              <div className="text-center mb-6 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Choose Device Type</h2>
+                <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">What type of device needs repair?</p>
+              </div>
+              
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {DEVICE_TYPES.map((device) => (
+                  <button
+                    key={device.key}
+                    onClick={() => setDeviceType(device.key)}
+                    className={`p-4 sm:p-6 md:p-8 rounded-lg sm:rounded-xl border-2 transition-all duration-200 transform hover:scale-105 min-h-[120px] sm:min-h-[140px] ${
+                      deviceType === device.key 
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg' 
+                        : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
+                    }`}
+                  >
+                    <div className="text-3xl sm:text-4xl mb-2 sm:mb-4">
+                      {device.icon}
+                    </div>
+                    <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white">
+                      {device.label}
+                    </h3>
+                  </button>
+                ))}
+              </div>
+              
+              <div className="flex justify-end mt-6 sm:mt-8">
+                <button
+                  className="px-6 py-3 sm:px-8 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2 text-sm sm:text-base"
+                  onClick={handleNextStep}
+                >
+                  {shouldSkipBrandSelection() ? 'Continue to Details' : 'Continue to Brand Selection'}
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div>
+              <div className="text-center mb-6 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Select Your Brand</h2>
+                <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">Choose the brand of your device</p>
+              </div>
+              
+              <div className="grid gap-4 sm:gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
+                {currentBrands.map((brandData) => (
+                  <button
+                    key={brandData.name}
+                    onClick={() => {
+                      setBrand(brandData.name);
+                      setModel("");
+                    }}
+                    className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 transform hover:scale-105 min-h-[100px] sm:min-h-[120px] ${
+                      brand === brandData.name 
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg' 
+                        : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'
+                    }`}
+                  >
+                    <div className="h-12 sm:h-16 rounded-lg grid place-items-center mb-2 sm:mb-3">
+                      {brandData.image ? (
+                        <img 
+                          src={brandData.image} 
+                          alt={`${brandData.name} logo`} 
+                          className="h-10 sm:h-12 w-auto opacity-80 object-contain" 
+                        />
+                      ) : (
+                        <div className="text-2xl sm:text-3xl opacity-70">
+                          {deviceType === 'smartwatch' ? '⌚' : 
+                           deviceType === 'airbuds' ? '🎧' : '📱'}
+                        </div>
+                      )}
+                    </div>
+                    <div className="font-semibold text-gray-900 dark:text-white text-center text-sm sm:text-base">
+                      {brandData.name}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              
+              <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 sm:mt-8">
+                <button 
+                  onClick={handleBackStep}
+                  className="px-4 py-3 sm:px-6 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg sm:rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base order-2 sm:order-1"
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Back to Device Type
+                </button>
+                <button
+                  disabled={!brand}
+                  className="px-4 py-3 sm:px-8 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform hover:scale-105 text-sm sm:text-base order-1 sm:order-2"
+                  onClick={() => setStep(3)}
+                >
+                  Continue to Details
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div>
+              <div className="text-center mb-6 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Repair & Contact Details</h2>
+                <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
+                  Provide details about the issue and how we can contact you
+                </p>
+                {deviceType && (
+                  <div className="mt-3 sm:mt-4 inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg text-xs sm:text-sm">
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Selected: <span className="font-semibold capitalize">{deviceType}</span>
+                    {brand && !shouldSkipBrandSelection() && <span> • <span className="font-semibold">{brand}</span></span>}
+                  </div>
+                )}
+              </div>
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault()
+                  await handleSubmit()
+                }}
+                className="space-y-4 sm:space-y-6"
+              >
+                {/* Device Details */}
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg sm:rounded-xl p-4 sm:p-6">
+                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3 sm:mb-4">Device Information</h3>
+                  <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+                    {/* Show brand input for device types that skipped brand selection */}
+                    {shouldSkipBrandSelection() && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                          Brand *
+                        </label>
+                        <input
+                          className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                          placeholder="Apple"
+                          value="Apple"
+                          readOnly
+                          required
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          MacBook devices are exclusively from Apple
+                        </p>
+                      </div>
+                    )}
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Model *
+                      </label>
+                      <input
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                        placeholder={
+                          deviceType === 'macbook' ? 'e.g. MacBook Air M1, MacBook Pro 14"' :
+                          deviceType === 'laptop' ? 'e.g. XPS 13, ThinkPad X1' :
+                          deviceType === 'smartwatch' ? 'e.g. Apple Watch Series 9, Galaxy Watch 6' :
+                          deviceType === 'airbuds' ? 'e.g. AirPods Pro, Galaxy Buds 2' :
+                          deviceType === 'tablet' ? 'e.g. iPad Pro, Galaxy Tab S9' :
+                          'e.g. iPhone 13, Galaxy S23'
+                        }
+                        value={model}
+                        onChange={(e) => setModel(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Issue Description *
+                      </label>
+                      <select
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                        value={issue}
+                        onChange={(e) => setIssue(e.target.value)}
+                        required
+                      >
+                        <option value="">Select the main issue</option>
+                        {COMMON_ISSUES.map((issueItem) => (
+                          <option key={issueItem} value={issueItem}>{issueItem}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Additional Details
+                      </label>
+                      <textarea
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm sm:text-base"
+                        placeholder="Provide more details about the issue, when it started, any error messages, etc..."
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Details */}
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg sm:rounded-xl p-4 sm:p-6">
+                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3 sm:mb-4">Your Contact Information</h3>
+                  <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Full Name *
+                      </label>
+                      <input
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                        value={userInfo.name}
+                        placeholder="Your full name"
+                        onChange={(e) => setUserInfo((s) => ({ ...s, name: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Phone Number *
+                      </label>
+                      <input
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                        value={userInfo.phone}
+                        placeholder="Your phone number"
+                        onChange={(e) => setUserInfo((s) => ({ ...s, phone: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                        value={userInfo.email}
+                        onChange={(e) => setUserInfo((s) => ({ ...s, email: e.target.value }))}
+                        placeholder="your.email@example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        City
+                      </label>
+                      <input
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                        value={userInfo.city}
+                        onChange={(e) => setUserInfo((s) => ({ ...s, city: e.target.value }))}
+                        placeholder="Your city"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Full Address
+                      </label>
+                      <textarea
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm sm:text-base"
+                        value={userInfo.address}
+                        onChange={(e) => setUserInfo((s) => ({ ...s, address: e.target.value }))}
+                        placeholder="Enter your complete address for doorstep service"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4">
+                  <button 
+                    type="button"
+                    onClick={handleBackStep}
+                    className="px-4 py-3 sm:px-6 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg sm:rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base order-2 sm:order-1"
+                  >
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    {shouldSkipBrandSelection() ? 'Back to Device Type' : 'Back to Brand Selection'}
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-3 sm:px-8 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-blue-400 disabled:to-blue-500 text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-200 transform hover:scale-105 disabled:scale-100 flex items-center justify-center gap-2 shadow-lg text-sm sm:text-base order-1 sm:order-2"
+                  >
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Book Repair Now
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
 
-        <form className="space-y-6" onSubmit={onSubmit}>
-          {/* Device Information */}
-          <div className="grid md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                Brand *
-              </label>
-              <input 
-                name="brand" 
-                value={formData.brand}
-                onChange={handleInputChange}
-                required 
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="e.g., Apple, Samsung"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                Model *
-              </label>
-              <input 
-                name="model" 
-                value={formData.model}
-                onChange={handleInputChange}
-                required 
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="e.g., iPhone 14, Galaxy S23"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                Issue *
-              </label>
-              <input
-                name="issue"
-                value={formData.issue}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Screen, Battery, Camera..."
-              />
+        {/* Sidebar */}
+        <aside className="hidden lg:block space-y-6">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-700">
+            <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-4">Why Choose Our Repair Service?</h3>
+            <div className="space-y-3">
+              {[
+                { icon: "🚚", text: "Free Doorstep Service" },
+                { icon: "🔧", text: "Expert Technicians" },
+                { icon: "⚡", text: "Same Day Repair" },
+                { icon: "🛡️", text: "Warranty on Repairs" },
+                { icon: "💎", text: "Genuine Parts" }
+              ].map((item, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  <span className="text-2xl">{item.icon}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{item.text}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Personal Information */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                Your Name *
-              </label>
-              <input 
-                name="name" 
-                value={formData.name}
-                onChange={handleInputChange}
-                required 
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Enter your full name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                Phone Number *
-              </label>
-              <input 
-                name="phone" 
-                value={formData.phone}
-                onChange={handleInputChange}
-                required 
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Your contact number"
-              />
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex items-center gap-4 pt-4">
-            <button 
-              type="submit"
-              disabled={loading} 
-              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-blue-400 disabled:to-blue-500 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 disabled:scale-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg flex items-center gap-2"
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-4">Need Immediate Help?</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              Our technicians are available to answer your questions and provide quick solutions.
+            </p>
+            <a
+              href="https://wa.me/919882154418"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Book Repair Now
-                </>
-              )}
-            </button>
-            {message && (
-              <span className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {message}
-              </span>
-            )}
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              Chat on WhatsApp
+            </a>
           </div>
-        </form>
+        </aside>
+      </div>
 
-        {/* Additional Info */}
-        <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
-          <div className="flex items-start gap-3">
-            <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-              <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">What happens next?</p>
-              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                After submitting this form, you'll be redirected to WhatsApp where our technician will confirm your repair details and schedule a convenient time for service.
-              </p>
-            </div>
+      {/* Mobile Help Section */}
+      <div className="lg:hidden mt-6 space-y-4">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700">
+          <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3">Why Choose Our Repair Service?</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { icon: "🚚", text: "Free Service" },
+              { icon: "🔧", text: "Expert Techs" },
+              { icon: "⚡", text: "Same Day" },
+              { icon: "🛡️", text: "Warranty" }
+            ].map((item, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <span className="text-xl">{item.icon}</span>
+                <span className="text-xs text-gray-700 dark:text-gray-300">{item.text}</span>
+              </div>
+            ))}
           </div>
         </div>
+
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+          <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3">Need Immediate Help?</h3>
+          <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
+            Our technicians are available to answer your questions.
+          </p>
+          <a
+            href="https://wa.me/919882154418"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            Chat on WhatsApp
+          </a>
+        </div>
       </div>
-    </section>
+    </div>
   )
 }
