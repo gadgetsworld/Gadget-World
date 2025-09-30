@@ -388,7 +388,6 @@ export const repairTabletBrands = [
   },
 ];
 
-
 export const repairSmartwatchBrands = [
   {
     name: "Apple Watch",

@@ -4,10 +4,23 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { brands, smartwatchBrands, budsBrands, laptopBrands, tabletBrands } from "@/lib/data"
 
+// Device type options including new categories
+const DEVICE_TYPES = [
+  { key: "phone", label: "Phone", icon: "📞", description: "Smartphones & Mobile Devices" },
+  { key: "macbook", label: "MacBook", icon: "💻", description: "Apple MacBooks & Laptops" },
+  { key: "laptop", label: "Laptop", icon: "💻", description: "Windows & Other Laptops" },
+  { key: "tablet", label: "Tablet", icon: "📱", description: "Tablets & iPads" },
+  { key: "smartwatch", label: "Smartwatch", icon: "⌚", description: "Smart Watches & Wearables" },
+  { key: "airbuds", label: "Airbuds", icon: "🎧", description: "Wireless Earbuds & Headphones" },
+] as const
+
+type DeviceType = typeof DEVICE_TYPES[number]['key']
+type Step = 1 | 2 | 3
+
 export default function SellPhonePage() {
   const router = useRouter()
-  const [step, setStep] = useState<1 | 2 | 3>(1)
-  const [deviceType, setDeviceType] = useState<string>("phone")
+  const [step, setStep] = useState<Step>(1)
+  const [deviceType, setDeviceType] = useState<DeviceType>("phone")
   const [brand, setBrand] = useState<string>("")
   const [model, setModel] = useState<string>("")
   const [variant, setVariant] = useState<string>("")
@@ -40,6 +53,64 @@ export default function SellPhonePage() {
     setVariant("")
   }, [deviceType])
 
+  // Check if current device type should skip brand selection
+  const shouldSkipBrandSelection = (device?: DeviceType) => {
+    const currentDevice = device || deviceType
+    return currentDevice === "macbook"
+  }
+
+  // Get brands based on device type
+  const getBrandsByDeviceType = () => {
+    switch (deviceType) {
+      case "phone":
+        return brands
+      case "smartwatch":
+        return smartwatchBrands
+      case "airbuds":
+        return budsBrands
+      case "laptop":
+        return laptopBrands
+      case "tablet":
+        return tabletBrands
+      case "macbook":
+        return []
+      default:
+        return brands
+    }
+  }
+
+  // Handle device type selection
+  const handleDeviceTypeSelect = (selectedDeviceType: DeviceType) => {
+    setDeviceType(selectedDeviceType)
+    
+    if (shouldSkipBrandSelection(selectedDeviceType)) {
+      setBrand("Apple") // Auto-set brand for MacBook
+      setStep(3) // Skip to step 3 (form)
+    } else {
+      setStep(2) // Go to brand selection
+    }
+  }
+
+  // Handle brand selection
+  const handleBrandSelect = (selectedBrand: string) => {
+    setBrand(selectedBrand)
+    setModel("")
+    setVariant("")
+    setStep(3) // Go to details step
+  }
+
+  // Handle back step
+  const handleBackStep = () => {
+    if (step === 3 && shouldSkipBrandSelection()) {
+      setStep(1) // Go back to device type if we skipped brand selection
+      setBrand("") // Clear brand when going back
+    } else if (step === 2) {
+      setStep(1) // Go back to device type from brand selection
+    } else if (step === 3 && !shouldSkipBrandSelection()) {
+      setStep(2) // Go back to brand selection from form
+    }
+  }
+
   // Function to clear all form fields
   const clearAllFields = () => {
     setDeviceType("phone")
@@ -58,38 +129,13 @@ export default function SellPhonePage() {
     setStep(1)
   }
 
-  // Get brands based on device type
-  const getBrandsByDeviceType = () => {
-    switch (deviceType) {
-      case "phone":
-        return brands
-      case "smartwatch":
-        return smartwatchBrands
-      case "airbuds":
-        return budsBrands
-      case "laptop":
-        return laptopBrands
-      case "tablet":
-        return tabletBrands
-      case "macbook":
-        return [] // Empty array for MacBook since we skip brand selection
-      default:
-        return brands
-    }
-  }
-
-  // Check if current device type should skip brand selection
-  const shouldSkipBrandSelection = () => {
-    return ["macbook"].includes(deviceType)
-  }
-
   async function handleSubmit() {
     const { default: NProgress } = await import("nprogress")
     const { toast } = await import("react-toastify")
     NProgress.start()
     
-    if (!brand || !userInfo.name || !userInfo.phone) {
-      toast.error("Please fill required fields.")
+    if (!brand || !userInfo.name || !userInfo.phone || !model || !variant || !condition) {
+      toast.error("Please fill all required fields.")
       NProgress.done()
       return
     }
@@ -108,7 +154,7 @@ export default function SellPhonePage() {
       issues,
     }
 
-    const waText = `Sell Request\nDevice Type: ${deviceType}\nBrand: ${brand}\nModel: ${model || "-"}\nStorage: ${variant || "-"}\nCondition: ${condition || "-"}\nIssues: ${issues || "-"}\n\nName: ${userInfo.name}\nPhone: ${userInfo.phone}\nEmail: ${userInfo.email || "-"}\nCity: ${userInfo.city || "-"}\nAddress: ${userInfo.address || "-"}`
+    const waText = `Sell Request\nDevice Type: ${deviceType}\nBrand: ${brand}\nModel: ${model}\nStorage: ${variant}\nCondition: ${condition}\nIssues: ${issues || "-"}\n\nName: ${userInfo.name}\nPhone: ${userInfo.phone}\nEmail: ${userInfo.email || "-"}\nCity: ${userInfo.city || "-"}\nAddress: ${userInfo.address || "-"}`
 
     if (typeof window !== "undefined") {
       const url = "https://wa.me/919882154418?text=" + encodeURIComponent(waText)
@@ -116,10 +162,16 @@ export default function SellPhonePage() {
     }
 
     try {
-      const res = await fetch("/api/sell", { method: "POST", body: JSON.stringify(payload) })
+      const res = await fetch("/api/sell", { 
+        method: "POST", 
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload) 
+      })
+      
       if (res.ok) {
         toast.success("Request submitted! You'll be contacted soon.")
-        // Clear all fields before redirecting
         clearAllFields()
         router.push("/sell-phone/success")
       } else {
@@ -132,38 +184,8 @@ export default function SellPhonePage() {
     }
   }
 
-  // Device type options including new categories
-  const DEVICE_TYPES = [
-    { key: "phone", label: "Phone", icon: "📞", description: "Smartphones & Mobile Devices" },
-    { key: "macbook", label: "MacBook", icon: "💻", description: "Apple MacBooks & Laptops" },
-    { key: "laptop", label: "Laptop", icon: "💻", description: "Windows & Other Laptops" },
-    { key: "tablet", label: "Tablet", icon: "📱", description: "Tablets & iPads" },
-    { key: "smartwatch", label: "Smartwatch", icon: "⌚", description: "Smart Watches & Wearables" },
-    { key: "airbuds", label: "Airbuds", icon: "🎧", description: "Wireless Earbuds & Headphones" },
-  ] as const
-
-  // Handle step progression
-  const handleNextStep = () => {
-    if (step === 1 && shouldSkipBrandSelection()) {
-      setStep(3) // Skip brand selection for macbook
-      // Auto-set brand to Apple for MacBook
-      setBrand("Apple")
-    } else {
-      setStep((step + 1) as 1 | 2 | 3)
-    }
-  }
-
-  // Handle back step
-  const handleBackStep = () => {
-    if (step === 3 && shouldSkipBrandSelection()) {
-      setStep(1) // Go back to device type if we skipped brand selection
-      setBrand("") // Clear brand when going back
-    } else {
-      setStep((step - 1) as 1 | 2 | 3)
-    }
-  }
-
   const currentBrands = getBrandsByDeviceType()
+  const skipBrandSelection = shouldSkipBrandSelection()
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-12">
@@ -179,26 +201,25 @@ export default function SellPhonePage() {
 
       {/* Improved Progress Steps with ref for scrolling */}
       <div ref={progressBarRef} className="mb-8 sm:mb-12">
-        {/* Progress Bar */}
         <div className="mt-6 sm:mt-8 max-w-md mx-auto px-4">
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div 
               className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500 ease-out"
               style={{ 
-                width: shouldSkipBrandSelection() && step === 3 
+                width: skipBrandSelection && step === 3 
                   ? '100%' 
-                  : `${((step - 1) / 2) * 100}%` 
+                  : `${((step - 1) / (skipBrandSelection ? 2 : 2)) * 100}%` 
               }}
             />
           </div>
           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
             <span>
-              Step {shouldSkipBrandSelection() && step === 3 ? '2' : step} of {shouldSkipBrandSelection() ? '2' : '3'}
+              Step {skipBrandSelection && step === 3 ? '2' : step} of {skipBrandSelection ? '2' : '3'}
             </span>
             <span>
-              {shouldSkipBrandSelection() && step === 3 
+              {skipBrandSelection && step === 3 
                 ? '100%' 
-                : `${Math.round(((step - 1) / 2) * 100)}%`} Complete
+                : `${Math.round(((step - 1) / (skipBrandSelection ? 2 : 2)) * 100)}%`} Complete
             </span>
           </div>
         </div>
@@ -207,18 +228,23 @@ export default function SellPhonePage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
         {/* Main Content */}
         <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 sm:p-6 lg:p-8">
+          {/* Step 1: Device Type Selection */}
           {step === 1 && (
             <div>
               <div className="text-center mb-6 sm:mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Choose Device Type</h2>
-                <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">What type of device do you want to sell?</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  Choose Device Type
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
+                  What type of device do you want to sell?
+                </p>
               </div>
               
               <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {DEVICE_TYPES.map((device) => (
                   <button
                     key={device.key}
-                    onClick={() => setDeviceType(device.key)}
+                    onClick={() => handleDeviceTypeSelect(device.key)}
                     className={`p-4 sm:p-6 md:p-8 rounded-lg sm:rounded-xl border-2 transition-all duration-200 transform hover:scale-105 min-h-[120px] sm:min-h-[140px] ${
                       deviceType === device.key 
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg' 
@@ -231,41 +257,32 @@ export default function SellPhonePage() {
                     <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white">
                       {device.label}
                     </h3>
-                    
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      {device.description}
+                    </p>
                   </button>
                 ))}
-              </div>
-              
-              <div className="flex justify-end mt-6 sm:mt-8">
-                <button
-                  className="px-6 py-3 sm:px-8 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2 text-sm sm:text-base"
-                  onClick={handleNextStep}
-                >
-                  {shouldSkipBrandSelection() ? 'Continue to Details' : 'Continue to Brand Selection'}
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
               </div>
             </div>
           )}
 
+          {/* Step 2: Brand Selection */}
           {step === 2 && (
             <div>
               <div className="text-center mb-6 sm:mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Select Your Brand</h2>
-                <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">Choose the brand of your device</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  Select Your Brand
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
+                  Choose the brand of your {deviceType}
+                </p>
               </div>
               
               <div className="grid gap-4 sm:gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
                 {currentBrands.map((brandData) => (
                   <button
                     key={brandData.name}
-                    onClick={() => {
-                      setBrand(brandData.name);
-                      setModel("");
-                      setVariant("");
-                    }}
+                    onClick={() => handleBrandSelect(brandData.name)}
                     className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 transform hover:scale-105 min-h-[100px] sm:min-h-[120px] ${
                       brand === brandData.name 
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg' 
@@ -289,7 +306,6 @@ export default function SellPhonePage() {
                     <div className="font-semibold text-gray-900 dark:text-white text-center text-sm sm:text-base">
                       {brandData.name}
                     </div>
-                    
                   </button>
                 ))}
               </div>
@@ -297,31 +313,24 @@ export default function SellPhonePage() {
               <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 sm:mt-8">
                 <button 
                   onClick={handleBackStep}
-                  className="px-4 py-3 sm:px-6 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg sm:rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base order-2 sm:order-1"
+                  className="px-4 py-3 sm:px-6 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg sm:rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
                 >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                   Back to Device Type
                 </button>
-                <button
-                  disabled={!brand}
-                  className="px-4 py-3 sm:px-8 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform hover:scale-105 text-sm sm:text-base order-1 sm:order-2"
-                  onClick={() => setStep(3)}
-                >
-                  Continue to Details
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
               </div>
             </div>
           )}
 
+          {/* Step 3: Device & Contact Details */}
           {step === 3 && (
             <div>
               <div className="text-center mb-6 sm:mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Device & Contact Details</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  Device & Contact Details
+                </h2>
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
                   Provide details about your device and how we can contact you
                 </p>
@@ -331,7 +340,7 @@ export default function SellPhonePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Selected: <span className="font-semibold capitalize">{deviceType}</span>
-                    {brand && !shouldSkipBrandSelection() && <span> • <span className="font-semibold">{brand}</span></span>}
+                    {brand && !skipBrandSelection && <span> • <span className="font-semibold">{brand}</span></span>}
                   </div>
                 )}
               </div>
@@ -345,17 +354,18 @@ export default function SellPhonePage() {
               >
                 {/* Device Details */}
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg sm:rounded-xl p-4 sm:p-6">
-                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3 sm:mb-4">Device Information</h3>
+                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3 sm:mb-4">
+                    Device Information
+                  </h3>
                   <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
                     {/* Show brand input for device types that skipped brand selection */}
-                    {shouldSkipBrandSelection() && (
+                    {skipBrandSelection && (
                       <div className="md:col-span-2">
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Brand *
                         </label>
                         <input
                           className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-                          placeholder="Apple"
                           value="Apple"
                           readOnly
                           required
@@ -365,6 +375,7 @@ export default function SellPhonePage() {
                         </p>
                       </div>
                     )}
+                    
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Model *
@@ -384,6 +395,7 @@ export default function SellPhonePage() {
                         required
                       />
                     </div>
+                    
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         {deviceType === 'macbook' || deviceType === 'laptop' ? 'Storage/RAM *' : 
@@ -405,6 +417,7 @@ export default function SellPhonePage() {
                         required
                       />
                     </div>
+                    
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Overall Condition *
@@ -422,6 +435,7 @@ export default function SellPhonePage() {
                         <option value="Needs Repair">Needs Repair - Issues present</option>
                       </select>
                     </div>
+                    
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Issues Description
@@ -439,7 +453,9 @@ export default function SellPhonePage() {
 
                 {/* Contact Details */}
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg sm:rounded-xl p-4 sm:p-6">
-                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3 sm:mb-4">Your Contact Information</h3>
+                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3 sm:mb-4">
+                    Your Contact Information
+                  </h3>
                   <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -453,6 +469,7 @@ export default function SellPhonePage() {
                         required
                       />
                     </div>
+                    
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Phone Number *
@@ -465,6 +482,7 @@ export default function SellPhonePage() {
                         required
                       />
                     </div>
+                    
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Email Address
@@ -477,6 +495,7 @@ export default function SellPhonePage() {
                         placeholder="your.email@example.com"
                       />
                     </div>
+                    
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         City
@@ -488,6 +507,7 @@ export default function SellPhonePage() {
                         placeholder="Your city"
                       />
                     </div>
+                    
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Full Address
@@ -512,8 +532,9 @@ export default function SellPhonePage() {
                     <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
-                    {shouldSkipBrandSelection() ? 'Back to Device Type' : 'Back to Brand Selection'}
+                    {skipBrandSelection ? 'Back to Device Type' : 'Back to Brand Selection'}
                   </button>
+                  
                   <button 
                     type="submit"
                     className="px-4 py-3 sm:px-8 sm:py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg text-sm sm:text-base order-1 sm:order-2"
@@ -530,82 +551,101 @@ export default function SellPhonePage() {
         </div>
 
         {/* Sidebar */}
-        <aside className="hidden lg:block space-y-6">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-700">
-            <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-4">Why Sell With Us?</h3>
-            <div className="space-y-3">
-              {[
-                { icon: "🚚", text: "Free Doorstep Pickup" },
-                { icon: "💰", text: "Best Price Guarantee" },
-                { icon: "⚡", text: "Instant Payment" },
-                { icon: "🛡️", text: "Secure & Safe Process" },
-                { icon: "📞", text: "Dedicated Support" }
-              ].map((item, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <span className="text-2xl">{item.icon}</span>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{item.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-            <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-4">Need Help?</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              Our team is here to help you with the selling process.
-            </p>
-            <a
-              href="https://wa.me/919882154418"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-              </svg>
-              Chat on WhatsApp
-            </a>
-          </div>
-        </aside>
+        <Sidebar />
       </div>
 
       {/* Mobile Help Section */}
-      <div className="lg:hidden mt-6 space-y-4">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700">
-          <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3">Why Sell With Us?</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { icon: "🚚", text: "Free Pickup" },
-              { icon: "💰", text: "Best Price" },
-              { icon: "⚡", text: "Instant Payment" },
-              { icon: "🛡️", text: "Secure Process" }
-            ].map((item, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <span className="text-xl">{item.icon}</span>
-                <span className="text-xs text-gray-700 dark:text-gray-300">{item.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      <MobileHelpSection />
+    </div>
+  )
+}
 
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-          <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3">Need Help?</h3>
-          <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
-            Our team is here to help you with the selling process.
-          </p>
-          <a
-            href="https://wa.me/919882154418"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-            </svg>
-            Chat on WhatsApp
-          </a>
+// Sidebar Component
+function Sidebar() {
+  return (
+    <aside className="hidden lg:block space-y-6">
+      <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-700">
+        <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-4">Why Sell With Us?</h3>
+        <div className="space-y-3">
+          {[
+            { icon: "🚚", text: "Free Doorstep Pickup" },
+            { icon: "💰", text: "Best Price Guarantee" },
+            { icon: "⚡", text: "Instant Payment" },
+            { icon: "🛡️", text: "Secure & Safe Process" },
+            { icon: "📞", text: "Dedicated Support" }
+          ].map((item, index) => (
+            <div key={index} className="flex items-center gap-3">
+              <span className="text-2xl">{item.icon}</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{item.text}</span>
+            </div>
+          ))}
         </div>
       </div>
+
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+        <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-4">Need Help?</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+          Our team is here to help you with the selling process.
+        </p>
+        <a
+          href="https://wa.me/919882154418"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+        >
+          <WhatsAppIcon />
+          Chat on WhatsApp
+        </a>
+      </div>
+    </aside>
+  )
+}
+
+// Mobile Help Section Component
+function MobileHelpSection() {
+  return (
+    <div className="lg:hidden mt-6 space-y-4">
+      <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700">
+        <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3">Why Sell With Us?</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { icon: "🚚", text: "Free Pickup" },
+            { icon: "💰", text: "Best Price" },
+            { icon: "⚡", text: "Instant Payment" },
+            { icon: "🛡️", text: "Secure Process" }
+          ].map((item, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <span className="text-xl">{item.icon}</span>
+              <span className="text-xs text-gray-700 dark:text-gray-300">{item.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+        <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-3">Need Help?</h3>
+        <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
+          Our team is here to help you with the selling process.
+        </p>
+        <a
+          href="https://wa.me/919882154418"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+        >
+          <WhatsAppIcon />
+          Chat on WhatsApp
+        </a>
+      </div>
     </div>
+  )
+}
+
+// WhatsApp Icon Component
+function WhatsAppIcon() {
+  return (
+    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+    </svg>
   )
 }
