@@ -157,7 +157,7 @@ export default function SellPhonePage() {
     const waText = `Sell Request\nDevice Type: ${deviceType}\nBrand: ${brand}\nModel: ${model}\nStorage: ${variant}\nCondition: ${condition}\nIssues: ${issues || "-"}\n\nName: ${userInfo.name}\nPhone: ${userInfo.phone}\nEmail: ${userInfo.email || "-"}\nCity: ${userInfo.city || "-"}\nAddress: ${userInfo.address || "-"}`
 
     if (typeof window !== "undefined") {
-      const url = "https://wa.me/919882154418?text=" + encodeURIComponent(waText)
+      const url = "https://wa.me/917827672674?text=" + encodeURIComponent(waText)
       window.open(url, "_blank", "noopener,noreferrer")
     }
 
@@ -588,7 +588,7 @@ function Sidebar() {
           Our team is here to help you with the selling process.
         </p>
         <a
-          href="https://wa.me/919882154418"
+          href="https://wa.me/917827672674"
           target="_blank"
           rel="noopener noreferrer"
           className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
@@ -628,7 +628,7 @@ function MobileHelpSection() {
           Our team is here to help you with the selling process.
         </p>
         <a
-          href="https://wa.me/919882154418"
+          href="https://wa.me/917827672674"
           target="_blank"
           rel="noopener noreferrer"
           className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"

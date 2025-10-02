@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 
 export function Footer() {
   return (
@@ -9,21 +10,27 @@ export function Footer() {
           <div className="sm:col-span-2">
             <div className="flex items-center gap-3 mb-4">
               <Link href="/" className="flex items-center gap-3 min-w-0 group">
-                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg group-hover:scale-105 transition-transform duration-200">
-                  <span className="text-white font-bold text-lg">GW</span>
-                  </div>
-                  <div className="flex flex-col">
+                <div className="flex items-center justify-center h-10 w-10 group-hover:scale-105 transition-transform duration-200 overflow-hidden">
+                  <Image 
+                    src="/logo.png" 
+                    alt="Gadgets World" 
+                    width={40} 
+                    height={40} 
+                    className="object-contain"
+                  />
+                </div>
+                <div className="flex flex-col">
                   <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                     Gadgets World
+                    Gadgets World
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Premium Products</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Buy | Sell | Repair</span>
                 </div>
               </Link>            
             </div>
             <p className="max-w-lg text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
               Buy, sell, and repair phones, laptops, and tablets. Doorstep pickup, instant quotes, and expert service.
             </p>
-            
+
             {/* Newsletter Subscription */}
             <div className="flex flex-col mx-auto mt-6 space-y-3 md:space-y-0 md:flex-row">
               <input 
@@ -41,7 +48,7 @@ export function Footer() {
           {/* Services */}
           <div>
             <p className="font-semibold text-gray-800 dark:text-white text-lg mb-6">Services</p>
-            <div className="flex flex-col items-start space-y-1">
+            <div className="flex flex-col items-start">
               <a href="/" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 text-base font-medium">
                 Home
               </a>
@@ -57,12 +64,15 @@ export function Footer() {
           {/* Contact */}
           <div>
             <p className="font-semibold text-gray-800 dark:text-white text-lg mb-6">Contact</p>
-            <div className="flex flex-col items-start space-y-1">
+            <div className="flex flex-col items-start">
               <a href="/contact" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 text-base font-medium">
                 Contact Us
               </a>
               <div className="text-gray-600 dark:text-gray-300 text-base font-medium">
-                Email: support@gadgetsworld.app
+                Email: gadgetsworld9009@gmail.com
+              </div>
+              <div className="text-gray-600 dark:text-gray-300 text-base font-medium">
+                Phone: +91 78276 72674
               </div>
             </div>
           </div>
@@ -75,16 +85,22 @@ export function Footer() {
         <div className="flex flex-col items-center justify-between md:flex-row">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-3 min-w-0 group">
-          <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg group-hover:scale-105 transition-transform duration-200">
-            <span className="text-white font-bold text-lg">GW</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-              Gadgets World
-            </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Premium Products</span>
-          </div>
-        </Link>
+              <div className="flex items-center justify-center h-10 w-10 group-hover:scale-105 transition-transform duration-200 overflow-hidden">
+                <Image 
+                  src="/logo.png" 
+                  alt="Gadgets World" 
+                  width={40} 
+                  height={40} 
+                  className="object-contain"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                  Gadgets World
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Buy | Sell | Repair</span>
+              </div>
+            </Link>
           </div>
           
           <div className="mt-4 md:mt-0 text-center md:text-left">

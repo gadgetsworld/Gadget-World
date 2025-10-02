@@ -38,7 +38,7 @@ export default function ContactPage() {
       const waText = `Contact Form\nName: ${formData.name}\nEmail: ${formData.email}\nMessage: ${formData.message}`
       if (typeof window !== "undefined") {
         const url =
-          "https://wa.me/917018021841?text=" + encodeURIComponent(waText)
+          "https://wa.me/917827672674?text=" + encodeURIComponent(waText)
         window.open(url, "_blank", "noopener,noreferrer")
       }
 
@@ -104,7 +104,7 @@ export default function ContactPage() {
               </span>
               <h2 className="mt-6 text-xl font-semibold text-gray-800 dark:text-white">Email</h2>
               <p className="mt-3 text-gray-600 dark:text-gray-300">Our friendly team is here to help.</p>
-              <p className="mt-3 text-blue-600 dark:text-blue-400 font-medium text-lg">hello@merakiui.com</p>
+              <p className="mt-3 text-blue-600 dark:text-blue-400 font-medium text-lg">gadgetsworld9009@gmail.com</p>
             </div>
 
             <div className="text-center p-6 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300">
@@ -114,9 +114,9 @@ export default function ContactPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                 </svg>
               </span>
-              <h2 className="mt-6 text-xl font-semibold text-gray-800 dark:text-white">Office</h2>
-              <p className="mt-3 text-gray-600 dark:text-gray-300">Come say hello at our office HQ.</p>
-              <p className="mt-3 text-blue-600 dark:text-blue-400 font-medium text-lg">100 Smith Street Collingwood VIC 3066 AU</p>
+              <h2 className="mt-6 text-xl font-semibold text-gray-800 dark:text-white">Shop</h2>
+              <p className="mt-3 text-gray-600 dark:text-gray-300">Come say hello at our Shop.</p>
+              <p className="mt-3 text-blue-600 dark:text-blue-400 font-medium text-lg">Tilak Nagar/Lajpat Nagar, New Delhi</p>
             </div>
 
             <div className="text-center p-6 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300">
@@ -126,8 +126,8 @@ export default function ContactPage() {
                 </svg>
               </span>
               <h2 className="mt-6 text-xl font-semibold text-gray-800 dark:text-white">Phone</h2>
-              <p className="mt-3 text-gray-600 dark:text-gray-300">Mon-Fri from 8am to 5pm.</p>
-              <p className="mt-3 text-blue-600 dark:text-blue-400 font-medium text-lg">+1 (555) 000-0000</p>
+              <p className="mt-3 text-gray-600 dark:text-gray-300">Mon-Fri from 9am to 7pm.</p>
+              <p className="mt-3 text-blue-600 dark:text-blue-400 font-medium text-lg">+91 78276 72674</p>
             </div>
           </div>
         </div>
@@ -216,18 +216,18 @@ export default function ContactPage() {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
           <div className="p-8 border-b border-gray-100 dark:border-gray-700">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Our Location</h3>
-            <p className="text-gray-600 dark:text-gray-300 text-lg">Pune, India</p>
+            <p className="text-gray-600 dark:text-gray-300 text-lg">Tilak Nagar, New Delhi</p>
             <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-              Visit our office or reach out to us for a meeting
+              Visit our shop or reach out to us for a meeting
             </p>
           </div>
           <div className="h-96">
             <iframe
-              title="Pune, India - Location"
+              title="Tilak Nagar, New Delhi - Location"
               className="w-full h-full"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d121059.04711156089!2d73.78056541037308!3d18.524603575903225!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2bf2e67461101%3A0x828d43bf9d9ee343!2sPune%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1705581234567!5m2!1sen!2sin"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.715212336134!2d77.08025827534613!3d28.64365317565822!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d03936f5c831f%3A0x6a7e73a9d715c5e5!2sTilak%20Nagar%2C%20New%20Delhi%2C%20Delhi!5e0!3m2!1sen!2sin!4v1705581234567!5m2!1sen!2sin"
               style={{ border: 0 }}
               allowFullScreen
             />

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { repairBrands, repairSmartwatchBrands, repairBudsBrands, repairLaptopBrands, repairTabletBrands } from "@/lib/data"
+import { repairBrands, smartwatchBrands, budsBrands, laptopBrands, tabletBrands } from "@/lib/data"
 
 // Device type options including new categories
 const DEVICE_TYPES = [
@@ -64,13 +64,13 @@ export default function RepairPhonePage() {
       case "phone":
         return repairBrands
       case "smartwatch":
-        return repairSmartwatchBrands
+        return smartwatchBrands
       case "airbuds":
-        return repairBudsBrands
+        return budsBrands
       case "laptop":
-        return repairLaptopBrands
+        return laptopBrands
       case "tablet":
-        return repairTabletBrands
+        return tabletBrands
       case "macbook":
         return []
       default:
@@ -167,7 +167,7 @@ export default function RepairPhonePage() {
     const waText = `Repair Request\nDevice Type: ${deviceType}\nBrand: ${brand}\nModel: ${model}\nIssue: ${issue}\n\nName: ${userInfo.name}\nPhone: ${userInfo.phone}\nEmail: ${userInfo.email || "-"}\nCity: ${userInfo.city || "-"}\nAddress: ${userInfo.address || "-"}`
 
     if (typeof window !== "undefined") {
-      const url = "https://wa.me/919882154418?text=" + encodeURIComponent(waText)
+      const url = "https://wa.me/917827672674?text=" + encodeURIComponent(waText)
       window.open(url, "_blank", "noopener,noreferrer")
     }
 
@@ -589,7 +589,7 @@ function RepairSidebar() {
           Our technicians are available to answer your questions and provide quick solutions.
         </p>
         <a
-          href="https://wa.me/919882154418"
+          href="https://wa.me/917827672674"
           target="_blank"
           rel="noopener noreferrer"
           className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
@@ -629,7 +629,7 @@ function RepairMobileHelpSection() {
           Our technicians are available to answer your questions.
         </p>
         <a
-          href="https://wa.me/919882154418"
+          href="https://wa.me/917827672674"
           target="_blank"
           rel="noopener noreferrer"
           className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"

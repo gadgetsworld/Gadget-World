@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import Image from "next/image"
 
 export function Navbar() {
   const pathname = usePathname()
@@ -19,7 +20,6 @@ export function Navbar() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-
 
   // Function to handle navigation and close sheet
   const handleNavigation = () => {
@@ -42,14 +42,21 @@ export function Navbar() {
       <div className="mx-auto max-w-7xl px-6 py-3 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 min-w-0 group">
-          <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg group-hover:scale-105 transition-transform duration-200">
-            <span className="text-white font-bold text-lg">GW</span>
+          <div className="flex items-center justify-center h-10 w-10 group-hover:scale-105 transition-transform duration-200 overflow-hidden">
+            <Image 
+              src="/logo.png" 
+              alt="Gadgets World" 
+              width={40} 
+              height={40} 
+              className="object-contain"
+              priority
+            />
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
               Gadgets World
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Premium Products</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Buy | Sell | Repair</span>
           </div>
         </Link>
 
@@ -73,7 +80,7 @@ export function Navbar() {
         <div className="hidden lg:flex items-center gap-3">
           <ThemeToggle />
           <a
-            href="https://wa.me/917018021841"
+            href="https://wa.me/917827672674"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
@@ -102,12 +109,21 @@ export function Navbar() {
             <SheetContent side="right" className="w-80 p-0 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800">
               <SheetHeader className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
                 <SheetTitle className="text-left flex items-center gap-3">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700">
-                    <span className="text-white font-bold text-sm">GW</span>
+                  <div className="flex items-center justify-center h-8 w-8 overflow-hidden">
+                    <Image 
+                      src="/logo.png" 
+                      alt="Gadgets World" 
+                      width={38} 
+                      height={38} 
+                      className="object-contain"
+                    />
                   </div>
-                  <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                    Gadgets World
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                      Gadgets World
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Buy | Sell | Repair</span>
+                  </div>
                 </SheetTitle>
               </SheetHeader>
               <div className="flex flex-col h-full p-6">
@@ -176,7 +192,7 @@ export function Navbar() {
 
                 <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
                   <a
-                    href="https://wa.me/917018021841"
+                    href="https://wa.me/917827672674"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={handleNavigation}

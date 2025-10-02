@@ -5,7 +5,7 @@ export default function SellSuccessPage() {
     "Hi Gadgets World, I just submitted a sell request.",
     "Please reach out to me on WhatsApp to schedule a pickup.",
   ].join("\n")
-  const waLink = `https://wa.me/917018021841?text=${encodeURIComponent(prefilled)}`
+  const waLink = `https://wa.me/917827672674?text=${encodeURIComponent(prefilled)}`
   
   return (
     <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 px-4 py-8">
@@ -92,7 +92,7 @@ export default function SellSuccessPage() {
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                Buy any Device
+                Repair Any Device
               </a>
             </div>
           </div>
@@ -112,8 +112,8 @@ export default function SellSuccessPage() {
         <div className="mt-6 text-center">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Need immediate assistance? Call us at{" "}
-            <a href="tel:+919882154418" className="text-blue-600 dark:text-blue-400 hover:underline">
-              +91 98821 54418
+            <a href="tel:+917827672674" className="text-blue-600 dark:text-blue-400 hover:underline">
+              +91 78276 72674
             </a>
           </p>
         </div>

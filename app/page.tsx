@@ -27,7 +27,7 @@ function Hero() {
     {
       title: "Sell your phone in minutes",
       desc: "Instant quote, free pickup, fast payout. Zero hidden fees.",
-      ctaA: { href: "/sell-phone", label: "Get Instant Quote" },
+      ctaA: { href: "/sell-phone", label: "Sell a Device" },
       ctaB: { href: "/repair-phone", label: "Repair Device" },
       img: "/buy-refurbished-phones.jpg",
       gradient: "from-blue-600 to-purple-600",
@@ -113,7 +113,7 @@ function ActionCards() {
       gradient: "from-blue-500 to-cyan-500",
     },
     {
-      title: "Repair Phone",
+      title: "Repair Device",
       desc: "Genuine parts, expert technicians, fast service.",
       href: "/repair-phone",
       img: "/repair-phone.jpg",
@@ -156,7 +156,7 @@ function ActionCards() {
                     : "bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
                 }`}
               >
-                {it.primary ? "Get Started" : "Learn More"}
+                {it.primary ? "Sell Device" : "Repair Device"}
                 <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -218,7 +218,7 @@ function BannerCTA() {
             href="/sell-phone"
             className="mt-8 w-full inline-flex justify-center items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:scale-105 transform transition-all duration-300 shadow-lg"
           >
-            Get Instant Quote
+            Sell Your Device
           </Link>
         </div>
       </div>
