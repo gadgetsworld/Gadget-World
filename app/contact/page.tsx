@@ -103,7 +103,7 @@ export default function ContactPage() {
                 </svg>
               </span>
               <h2 className="mt-6 text-xl font-semibold text-gray-800 dark:text-white">Email</h2>
-              <p className="mt-3 text-gray-600 dark:text-gray-300">Our friendly team is here to help.</p>
+              <p className="mt-3 text-gray-600 dark:text-gray-300">Our friendly team will help you.</p>
               <p className="mt-3 text-blue-600 dark:text-blue-400 font-medium text-lg">gadgetsworld9009@gmail.com</p>
             </div>
 
@@ -126,7 +126,7 @@ export default function ContactPage() {
                 </svg>
               </span>
               <h2 className="mt-6 text-xl font-semibold text-gray-800 dark:text-white">Phone</h2>
-              <p className="mt-3 text-gray-600 dark:text-gray-300">Mon-Fri from 9am to 7pm.</p>
+              <p className="mt-3 text-gray-600 dark:text-gray-300">Mon-Sun from 10am to 10pm.</p>
               <p className="mt-3 text-blue-600 dark:text-blue-400 font-medium text-lg">+91 78276 72674</p>
             </div>
           </div>
