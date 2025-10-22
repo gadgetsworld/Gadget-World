@@ -24,7 +24,7 @@ export async function createSession(payload: { userId: string; email: string; na
     .setIssuedAt()
     .setExpirationTime("7d")
     .sign(secret)
-  cookies().set(COOKIE_NAME, token, {
+    cookies().set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: true,
     sameSite: "lax",

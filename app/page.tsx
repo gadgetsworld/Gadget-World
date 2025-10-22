@@ -29,7 +29,7 @@ function Hero() {
       desc: "Instant quote, free pickup, fast payout. Zero hidden fees.",
       ctaA: { href: "/sell-phone", label: "Sell a Device" },
       ctaB: { href: "/repair-phone", label: "Repair Device" },
-      img: "/buy-refurbished-phones.jpg",
+      img: "/iphone-dash1.jpg",
       gradient: "from-blue-600 to-purple-600",
     },
     {
@@ -37,8 +37,16 @@ function Hero() {
       desc: "Genuine parts, transparent pricing, quick turnaround.",
       ctaA: { href: "/repair-phone", label: "Book a Repair" },
       ctaB: { href: "/sell-phone", label: "Sell Device" },
-      img: "/oneplus-9.jpg",
+      img: "/iphone-dash.jpg",
       gradient: "from-orange-600 to-red-600",
+    },
+    {
+      title: "Buy premium devices",
+      desc: "Quality headphones, smartwatches, and AirPods. Best prices guaranteed.",
+      ctaA: { href: "/buy-phone", label: "Buy Devices" },
+      ctaB: { href: "/sell-phone", label: "Sell Device" },
+      img: "/iphone-dash2.jpg",
+      gradient: "from-purple-600 to-pink-600",
     },
   ]
   const [index, setIndex] = React.useState(0)
@@ -74,16 +82,18 @@ function Hero() {
           <div className="mt-8 grid grid-cols-3 gap-4">
             <Stat value="250k+" label="Devices Traded" />
             <Stat value="4.8★" label="Customer Rating" />
-            <Stat value="48h" label="Avg. Payout" />
+            <Stat value="Instant" label="Payout" />
           </div>
         </div>
         <div className="relative animate-in fade-in slide-in-from-right-8 duration-700">
           <div className="overflow-hidden rounded-2xl border-4 border-white/20 bg-white/10 backdrop-blur-sm shadow-2xl">
-            <img 
-              src={s.img || "/placeholder.svg"} 
-              alt="Gadgets World highlight" 
-              className="block h-auto w-full transform hover:scale-105 transition-transform duration-700"
-            />
+            <div className="aspect-square w-full bg-gradient-to-br from-gray-100/10 to-gray-200/10">
+              <img 
+                src={s.img || "/placeholder.svg"} 
+                alt="Gadgets World highlight" 
+                className="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-700"
+              />
+            </div>
           </div>
           <DotNav count={slides.length} index={index} setIndex={setIndex} />
         </div>
@@ -113,8 +123,16 @@ function ActionCards() {
       gradient: "from-blue-500 to-cyan-500",
     },
     {
+      title: "Buy Premium Devices",
+      desc: "We also deal in premium quality headphones, smartwatches, and AirPods.",
+      href: "/buy-phone",
+      img: "/buy-refurbished-phones.jpg",
+      icon: "🎧",
+      gradient: "from-blue-500 to-cyan-500",
+    },
+    {
       title: "Repair Device",
-      desc: "Genuine parts, expert technicians, fast service.",
+      desc: "Genuine parts, expert technicians, fast service and support.",
       href: "/repair-phone",
       img: "/repair-phone.jpg",
       icon: "🔧",
@@ -153,10 +171,12 @@ function ActionCards() {
                 className={`mt-6 inline-flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
                   it.primary 
                     ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:shadow-xl" 
+                    : it.title === "Buy Premium Devices"
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:shadow-xl"
                     : "bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
                 }`}
               >
-                {it.primary ? "Sell Device" : "Repair Device"}
+                {it.primary ? "Sell Device" : it.title === "Buy Premium Devices" ? "Buy Now" : "Repair Device"}
                 <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
