@@ -55,6 +55,9 @@ export function Footer() {
               <a href="/sell-phone" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 text-base font-medium">
                 Sell Your Device
               </a>
+              <a href="/buy-phone" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 text-base font-medium">
+                Buy premium Device
+              </a>
               <a href="/repair-phone" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 text-base font-medium">
                 Repair Your Device
               </a>

@@ -170,14 +170,24 @@ export const budsBrands = [
 
 export const testimonials = [
   {
-    name: "John Doe",
+    name: "Ashu Sharma",
     text: "Amazing service! Sold my phone in minutes and got a great price.",
-    image: "https://media.istockphoto.com/id/1961053928/photo/testimonial-portrait-of-a-handsome-mature-man.jpg?s=612x612&w=0&k=20&c=MJq7K4S8Hihi7p4f4-Ja4_II9X8HRsBGusOcJ7uJLbc="
+    image: "https://images.unsplash.com/photo-1694871420373-e9c1031b91ee?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
   },
   {
-    name: "Jane Smith",
+    name: "Vishal Patel",
     text: "Repair was quick and professional. Highly recommend!",
-    image: "https://www.shutterstock.com/image-photo/portrait-young-investor-banker-workplace-260nw-2364566447.jpg"
+    image: "https://plus.unsplash.com/premium_photo-1682089787056-9ac0c78a2ac2?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NDl8fGluZGlhbiUyMG1hbnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&q=60&w=600"
+  },
+  {
+    name: "Vijay Kumar",
+    text: "Bought premium headphones at an unbeatable price. Excellent quality and fast delivery!",
+    image: "https://plus.unsplash.com/premium_photo-1723754591877-4178579ce444?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NDF8fGluZGlhbiUyMG1hbnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&q=60&w=600"
+  },
+  {
+    name: "Aman Singh",
+    text: "Free pickup service made selling my old phone so convenient. Great customer support throughout!",
+    image: "https://images.unsplash.com/photo-1609252509102-aa73ff792667?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzl8fGluZGlhbiUyMG1hbnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&q=60&w=600"
   },
 ];
 
@@ -488,3 +498,4 @@ export const repairBudsBrands = [
     description: "Popular and budget-friendly."
   }
 ];
+
