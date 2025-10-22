@@ -37,7 +37,7 @@ function Hero() {
       desc: "Genuine parts, transparent pricing, quick turnaround.",
       ctaA: { href: "/repair-phone", label: "Book a Repair" },
       ctaB: { href: "/sell-phone", label: "Sell Device" },
-      img: "/iphone-dash.jpg",
+      img: "https://images.unsplash.com/photo-1709178294960-da559766cc8d?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=626",
       gradient: "from-orange-600 to-red-600",
     },
     {
