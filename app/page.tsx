@@ -29,7 +29,7 @@ function Hero() {
       desc: "Instant quote, free pickup, fast payout. Zero hidden fees.",
       ctaA: { href: "/sell-phone", label: "Sell a Device" },
       ctaB: { href: "/repair-phone", label: "Repair Device" },
-      img: "/iphone-dash1.jpg",
+      img: "https://images.unsplash.com/photo-1753413353704-0fdc496ac0f8?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470",
       gradient: "from-blue-600 to-purple-600",
     },
     {
@@ -45,7 +45,7 @@ function Hero() {
       desc: "Quality headphones, smartwatches, and AirPods. Best prices guaranteed.",
       ctaA: { href: "/buy-phone", label: "Buy Devices" },
       ctaB: { href: "/sell-phone", label: "Sell Device" },
-      img: "/iphone-dash2.jpg",
+      img: "https://images.unsplash.com/photo-1758398013809-fc909955bd76?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzV8fGlwaG9uZSUyMDE3JTIwcHJvfGVufDB8fDB8fHww&auto=format&fit=crop&q=60&w=600",
       gradient: "from-purple-600 to-pink-600",
     },
   ]
